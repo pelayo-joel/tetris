@@ -531,7 +531,7 @@ class GfxButton:
 class GridMap:
     """Constructor"""
     def __init__(self, parent:pygame.Surface, cellSize:tuple, posX:int, posY:int, nColumns:int, nRows:int, centerX:bool=False, centerY:bool=False, pourcentMode:bool=False, 
-    cellGap:int=0, gridBG:tuple=(0, 0, 0)):
+    cellGap:int=0, gridBG:tuple=(5, 5, 5)):
         self.frame = parent
         self.__cell = cellSize
         self.__cellGap = cellGap
@@ -541,10 +541,10 @@ class GridMap:
         self.nColumns, self.nRows = nColumns, nRows
         self.__InitPos()
 
-        self.__gridSurf = Frame(self.frame, ((self.__cell[0]+self.__cellGap) * self.nColumns, (self.__cell[1]+self.__cellGap) * self.nRows), (self.left, self.top), self.__gridBG)
+        self.gridSurf = Frame(self.frame, ((self.__cell[0]+self.__cellGap) * self.nColumns, (self.__cell[1]+self.__cellGap) * self.nRows), (self.left, self.top), self.__gridBG)
         self.__InitGrid()
 
-        self.__gridSurf.ActiveFrame()
+        self.gridSurf.ActiveFrame()
     
     """Private methods (utility for the class)"""
     
@@ -579,9 +579,13 @@ class GridMap:
         for row in range(0, self.nColumns):
             for column in range(0, self.nRows):
                 cellRect = pygame.Rect((self.__cell[0]+self.__cellGap) * row, (self.__cell[1]+self.__cellGap) * column, self.__cell[0], self.__cell[1])
-                gfxdraw.rectangle(self.__gridSurf, cellRect, (20, 20, 20))
+                gfxdraw.rectangle(self.gridSurf, cellRect, (15, 15, 15))
 
-
+    def GridUpdate(self):
+        self.__InitGrid()
+        self.gridSurf.ActiveFrame()
+        self.gridSurf.fill(self.__gridBG)
+        pygame.display.update(self.gridSurf.get_rect())
 
 
 
