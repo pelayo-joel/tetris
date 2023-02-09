@@ -1,11 +1,46 @@
 from const import *
 import widgets
 
+
+
+class PlayField(widgets.GridMap):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__stackGroup = pygame.sprite.Group()
+        self.stack = []
+
+    def FillCell(self, landedTile):
+        self.__stackGroup.add(landedTile)
+        self.stack.append(landedTile.rect.topleft)
+
+    def DrawStack(self):
+        self.__stackGroup.draw(self.gridSurf)
+
+    def ClearStack(self):
+        self.__stackGroup.empty()
+        self.stack = []
+
+    def CheckLoss(self):
+        for tile in self.__stackGroup:
+            if tile.rect.y < 0:
+                return True
+
+        return False
+
+        
+    
+
+
+
+
+
+
 class Tile(pygame.sprite.Sprite):
-    def __init__(self, tilePos:pygame.Vector2, sprite:pygame.image, spriteGroup:pygame.sprite.Group):
+    def __init__(self, tilePos:pygame.Vector2, sprite:pygame.image, spriteGroup:pygame.sprite.Group, playfield:PlayField):
         pygame.sprite.Sprite.__init__(self, spriteGroup)
         self.pos = tilePos + SPAWN_POS
         self.image = sprite
+        self.playfield = playfield
         self.rect = self.image.get_rect(topleft=self.pos * PLAYFIELD_CELL_SIZE)
         
 
@@ -24,7 +59,7 @@ class Tile(pygame.sprite.Sprite):
     
     def TileCollision(self, posToCheck):
         posX, posY = posToCheck.x * PLAYFIELD_CELL_SIZE, posToCheck.y * PLAYFIELD_CELL_SIZE
-        if 0 <= posX < PLAYFIELD_W and posY < PLAYFIELD_H:
+        if 0 <= posX < PLAYFIELD_W and posY < PLAYFIELD_H and ((posX, posY) not in self.playfield.stack):
             return False
         return True
 
@@ -33,7 +68,7 @@ class Tile(pygame.sprite.Sprite):
 
 
 class Tetromino:
-    def __init__(self, parent:widgets.GridMap):
+    def __init__(self, parent:PlayField):
         self.playfield = parent
         self.shape = random.choice(list(Tetrominoes.keys()))
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
@@ -53,7 +88,7 @@ class Tetromino:
         self.tileSprite = pygame.transform.smoothscale(self.tileSprite, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE))
         
         for pos in Tetrominoes[self.shape]:
-            TetrominoShape.append(Tile(pos, self.tileSprite, self.__tileSpriteGroup))
+            TetrominoShape.append(Tile(pos, self.tileSprite, self.__tileSpriteGroup, self.playfield))
         
         return TetrominoShape
     
@@ -66,29 +101,21 @@ class Tetromino:
         if orientation == "Clockwise":
             for kick in WallKickData[kickSet][RotationState[(self.rStateSelector + 1) % len(RotationState)]]:
                 testKick = [self.tiles[0].pos + kick]
-                for i in range(1, 3):
+                for i in range                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      (1, 4):
                     testKick.append(self.tiles[i].TileRotation(self.tiles[0].pos, orientation) + kick)
                 
                 if not self.Colliding(testKick):
-                    for i in range(1, 4):
-                        self.tiles[i].pos = self.tiles[i].TileRotation(self.tiles[0].pos, orientation) + kick
-                        self.tiles[i].TileUpdate()
-                    self.tiles[0].pos += kick
-                    self.tiles[0].TileUpdate()
+                    self.TetrominoUpdate(testKick)
                     break
 
         elif orientation == "CounterClockwise":
             for kick in WallKickData[kickSet][RotationState[(self.rStateSelector - 1) % len(RotationState)]]:
                 testKick = [self.tiles[0].pos - kick]
-                for i in range(1, 3):
+                for i in range(1, 4):
                     testKick.append(self.tiles[i].TileRotation(self.tiles[0].pos, orientation) - kick)
                 
                 if not self.Colliding(testKick):
-                    for i in range(1, 4):
-                        self.tiles[i].pos = self.tiles[i].TileRotation(self.tiles[0].pos, orientation) - kick
-                        self.tiles[i].TileUpdate()
-                    self.tiles[0].pos -= kick
-                    self.tiles[0].TileUpdate()
+                    self.TetrominoUpdate(testKick)
                     break
 
 
@@ -101,13 +128,9 @@ class Tetromino:
             nextPos.append(tile.pos + direction)
 
         if not self.Colliding(nextPos):
-            for tile in self.tiles: 
-                tile.pos += direction
-                tile.TileUpdate()
+            self.TetrominoUpdate(nextPos)
         elif direction == DIRECTIONS['down']:
             self.__landed = True
-
-        self.TetrominoUpdate()
 
     #Rotates the tetromino in clockwise or counterclockwise rotation
     def Rotate(self, clockOrientation):
@@ -116,9 +139,7 @@ class Tetromino:
             nextPos.append(tile.TileRotation(self.tiles[0].pos, clockOrientation))
         print(nextPos)
         if not self.Colliding(nextPos):
-            for tile in self.tiles: 
-                tile.pos = tile.TileRotation(self.tiles[0].pos, clockOrientation)
-                tile.TileUpdate()
+            self.TetrominoUpdate(nextPos)
             
             if clockOrientation == "Clockwise":
                 self.rStateSelector += 1
@@ -134,13 +155,15 @@ class Tetromino:
             self.__WallKickTesting(clockOrientation)
             
         self.rOrientation = RotationState[(self.rStateSelector % len(RotationState))]
-        self.TetrominoUpdate()
 
     #Checks if pos is colliding
     def Colliding(self, posToCheck):
         return any(map(Tile.TileCollision, self.tiles, posToCheck))
     
-    def TetrominoUpdate(self):
+    def TetrominoUpdate(self, newTile):
+        for i in range(4):
+            self.tiles[i].pos = newTile[i]
+            self.tiles[i].TileUpdate()
         self.playfield.GridUpdate()
         self.__tileSpriteGroup.update()
         self.__tileSpriteGroup.draw(self.playfield.gridSurf)
@@ -157,3 +180,9 @@ class Tetromino:
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
         self.tiles = self.__Tetromino()
+
+    def AddToStack(self):
+        for tile in self.tiles:
+            self.playfield.FillCell(tile)
+
+

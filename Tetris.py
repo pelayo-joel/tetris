@@ -12,14 +12,17 @@ DISPLAY = pygame.display.set_mode(DISPLAY_RES)
 DISPLAY.fill((25, 25, 25))
 
 gfxButtonTest = GfxButton(DISPLAY, 220, 690, posX=330, posY=0, buttonLabel="Button")
-playfield = GridMap(DISPLAY, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 15, 20, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS)
+playfield = PlayField(DISPLAY, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 15, 20, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS)
 tetrominoBag = []
 tetromino = Tetromino(playfield)
 
 pygame.display.flip()
 
 def NewTetromino():
-    global tetrominoBag, tetromino
+    global tetrominoBag, tetromino, running
+    tetromino.AddToStack()
+    if playfield.CheckLoss():
+        playfield.ClearStack()
     if len(tetrominoBag) >= (len(list(Tetrominoes.keys())) * 2) - 2:
         tetrominoBag = []
 
@@ -60,4 +63,5 @@ while running:
     if tetromino.Landed():
         NewTetromino()
     
+    playfield.DrawStack()
     pygame.display.update()
