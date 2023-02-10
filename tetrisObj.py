@@ -7,11 +7,11 @@ class PlayField(widgets.GridMap):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.__stackGroup = pygame.sprite.Group()
-        self.stack = []
-
+        self.stack = [[None] * self.nColumns for i in range(self.nRows)]
+    
     def FillCell(self, landedTile):
         self.__stackGroup.add(landedTile)
-        self.stack.append(landedTile.rect.topleft)
+        self.stack[int(landedTile.pos.y)][int(landedTile.pos.x)] = landedTile
 
     def DrawStack(self):
         self.__stackGroup.draw(self.gridSurf)
@@ -19,6 +19,24 @@ class PlayField(widgets.GridMap):
     def ClearStack(self):
         self.__stackGroup.empty()
         self.stack = []
+
+    def ClearLines(self):
+        for row in range((len(self.stack) - 1), 0, -1):
+            comboLines = 0
+            for comboRow in range(row, 0, -1):
+                if None not in self.stack[comboRow] and comboLines < 5:
+                    comboLines += 1
+                    for tile in self.stack[comboRow]:
+                        tile.kill()
+                else:
+                    lineFall = 0
+                    for tile in self.__stackGroup:
+                        if tile.rect.y < row * PLAYFIELD_CELL_SIZE:
+                            tile.rect.y += comboLines * PLAYFIELD_CELL_SIZE
+                    for gap in range(row, 0, -1):
+                        self.stack[gap] = self.stack[comboRow - lineFall]
+                        lineFall += 1
+                    break
 
     def CheckLoss(self):
         for tile in self.__stackGroup:
@@ -57,9 +75,13 @@ class Tile(pygame.sprite.Sprite):
         rotated = origin.rotate(degree)
         return rotated + pivot
     
+    '''def TileDrop(self):
+        while not self.TileCollision(self.pos):
+            self.pos += DIRECTIONS["down"]'''
+    
     def TileCollision(self, posToCheck):
         posX, posY = posToCheck.x * PLAYFIELD_CELL_SIZE, posToCheck.y * PLAYFIELD_CELL_SIZE
-        if 0 <= posX < PLAYFIELD_W and posY < PLAYFIELD_H and ((posX, posY) not in self.playfield.stack):
+        if 0 <= posX < PLAYFIELD_W and posY < PLAYFIELD_H and (self.playfield.stack[int(posToCheck.y)][int(posToCheck.x)] is None or (posX, posY) != self.playfield.stack[int(posToCheck.y)][int(posToCheck.x)].rect.topleft):
             return False
         return True
 
@@ -137,7 +159,7 @@ class Tetromino:
         nextPos = []
         for tile in self.tiles:
             nextPos.append(tile.TileRotation(self.tiles[0].pos, clockOrientation))
-        print(nextPos)
+
         if not self.Colliding(nextPos):
             self.TetrominoUpdate(nextPos)
             
@@ -147,11 +169,9 @@ class Tetromino:
                 self.rStateSelector -= 1
 
         elif clockOrientation == "Clockwise":
-            print("Trying wallkick")
             self.__WallKickTesting(clockOrientation)
 
         elif clockOrientation == "CounterClockwise":
-            print("Trying wallkick")
             self.__WallKickTesting(clockOrientation)
             
         self.rOrientation = RotationState[(self.rStateSelector % len(RotationState))]
@@ -170,6 +190,10 @@ class Tetromino:
 
     def TetrominoFall(self):
         self.Move(DIRECTIONS["down"])
+
+    def Drop(self):
+        while not self.__landed:
+            self.Move(DIRECTIONS["down"])
 
     def Landed(self):
         return self.__landed

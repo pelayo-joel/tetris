@@ -21,6 +21,7 @@ pygame.display.flip()
 def NewTetromino():
     global tetrominoBag, tetromino, running
     tetromino.AddToStack()
+    playfield.ClearLines()
     if playfield.CheckLoss():
         playfield.ClearStack()
     if len(tetrominoBag) >= (len(list(Tetrominoes.keys())) * 2) - 2:
@@ -32,36 +33,45 @@ def NewTetromino():
     tetromino = nextTetromino
 
 def Controls(key):
+    if key == K_ESCAPE:
+        NewTetromino()
+        playfield.ClearStack()
     if key == K_q and tetromino.shape != "O" and not tetromino.Landed():
         tetromino.Rotate("CounterClockwise")
-        print("should rotate left")
     if key == K_w and tetromino.shape != "O" and not tetromino.Landed():
         tetromino.Rotate("Clockwise")
-        print("should rotate right")
     if key == K_LEFT and not tetromino.Landed():
         tetromino.Move(DIRECTIONS["left"])
-        print("should go left")
     if key == K_RIGHT and not tetromino.Landed():
         tetromino.Move(DIRECTIONS["right"])
-        print("should go right")
+    if key == K_UP:
+        tetromino.Drop()
 
-running = True
-while running:
-    timer = pygame.time.get_ticks()
-    keys = pygame.key.get_pressed()
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if keys[pygame.K_DOWN]:
-            TIME_INTERVAL = 100
-        if event.type == KEYDOWN:
-            Controls(event.key)
 
-    if timer > CLOCK:
-        tetromino.TetrominoFall()
-        CLOCK += TIME_INTERVAL
-    if tetromino.Landed():
-        NewTetromino()
-    
-    playfield.DrawStack()
-    pygame.display.update()
+
+
+
+
+if __name__ == "__main__":
+    running = True
+    while running:
+        timer = pygame.time.get_ticks()
+        keys = pygame.key.get_pressed()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+            if keys[pygame.K_DOWN]:
+                TIME_INTERVAL = 100
+            else:
+                TIME_INTERVAL = 1150
+            if event.type == KEYDOWN:
+                Controls(event.key)
+
+        if timer > CLOCK:
+            tetromino.TetrominoFall()
+            CLOCK += TIME_INTERVAL
+        if tetromino.Landed():
+            NewTetromino()
+        
+        playfield.DrawStack()
+        pygame.display.update()

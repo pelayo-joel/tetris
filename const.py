@@ -5,7 +5,7 @@ vector = pygame.math.Vector2
 
 FPS = 60
 CLOCK = 0
-TIME_INTERVAL = 1150
+TIME_INTERVAL = 300
 DISPLAY_BG = 0
 PLAYFIELD_BG = 0
 
