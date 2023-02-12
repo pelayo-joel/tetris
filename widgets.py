@@ -1,5 +1,5 @@
-import pygame
 import time
+from const import *
 from pygame.locals import *
 from pygame import gfxdraw
 
@@ -53,7 +53,7 @@ class TextLabel:
         if bgColor != None:
             self.bg = bgColor
         if self.font == None:
-            self.textFont = pygame.font.Font("Fonts/Comfortaa-VariableFont_wght.ttf", self.textSize)
+            self.textFont = pygame.font.Font(FONT_PATH, self.textSize)
         else:
             self.textFont = pygame.font.Font(self.font, self.textSize)
         
@@ -177,7 +177,7 @@ class Button:
     #Sets up the label on the button wether if it's an image or a text
     def __DrawLabel(self, label, color=(0, 0, 0)):
         if isinstance(label, str) and "/" not in label:
-            font = pygame.font.Font("Fonts/Comfortaa-VariableFont_wght.ttf", 30)
+            font = pygame.font.Font(FONT_PATH, 30)
             myText = font.render(label, True, color)
             self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:
@@ -462,7 +462,7 @@ class GfxButton:
     #Sets up the label on the button wether if it's an image or a text
     def __DrawLabel(self, label, color=(0, 0, 0)):
         if isinstance(label, str) and "/" not in label:
-            font = pygame.font.Font("Fonts/Comfortaa-VariableFont_wght.ttf", 30)
+            font = pygame.font.Font(FONT_PATH, 30)
             myText = font.render(self.label, True, color)
             self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:

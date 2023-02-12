@@ -2,7 +2,7 @@ from const import *
 from widgets import *
 from tetrisObj import *
 
-pygame.init()               
+pygame.init()        
 pygame.display.set_caption('Tetris69')
 pygame.display.set_icon(pygame.image.load(f'{IMAGE_PATH}tetris69.png'))
 clock = pygame.time.Clock()
@@ -15,37 +15,45 @@ gfxButtonTest = GfxButton(DISPLAY, 220, 690, posX=330, posY=0, buttonLabel="Butt
 playfield = PlayField(DISPLAY, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 15, 20, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS)
 tetrominoBag = []
 tetromino = Tetromino(playfield)
+tetroHold = None
 
 pygame.display.flip()
 
 def NewTetromino():
     global tetrominoBag, tetromino, running
-    tetromino.AddToStack()
-    playfield.ClearLines()
-    if playfield.CheckLoss():
-        playfield.ClearStack()
     if len(tetrominoBag) >= (len(list(Tetrominoes.keys())) * 2) - 2:
         tetrominoBag = []
 
     nextTetromino = Tetromino(playfield)
     nextTetromino.RerollShape(tetrominoBag, tetromino.shape)
     tetrominoBag.append(tetromino.shape)
-    tetromino = nextTetromino
+    return nextTetromino
+
+"""def HoldTetromino():
+    global tetroHold, tetromino
+    if tetroHold == None:
+        tetroHold = tetromino
+        NewTetromino()
+    else:
+        tetroHold, tetromino = tetromino, tetroHold"""
 
 def Controls(key):
-    if key == K_ESCAPE:
-        NewTetromino()
+    global tetromino, tetroHold
+    
+    tetromino.TetroControls(key)
+
+    if key == pygame.K_ESCAPE:
+        tetromino = NewTetromino()
         playfield.ClearStack()
-    if key == K_q and tetromino.shape != "O" and not tetromino.Landed():
-        tetromino.Rotate("CounterClockwise")
-    if key == K_w and tetromino.shape != "O" and not tetromino.Landed():
-        tetromino.Rotate("Clockwise")
-    if key == K_LEFT and not tetromino.Landed():
-        tetromino.Move(DIRECTIONS["left"])
-    if key == K_RIGHT and not tetromino.Landed():
-        tetromino.Move(DIRECTIONS["right"])
-    if key == K_UP:
-        tetromino.Drop()
+
+    if key == pygame.K_SPACE:
+        pygame.mixer.Sound.play(SoundEffects["Hold"])
+        if tetromino.Hold(tetroHold) == tetromino:
+            tetroHold = tetromino
+            tetromino = NewTetromino()
+        else:
+            tetromino, tetroHold = tetromino.Hold(tetroHold), tetromino
+
 
 
 
@@ -64,14 +72,21 @@ if __name__ == "__main__":
                 TIME_INTERVAL = 100
             else:
                 TIME_INTERVAL = 1150
-            if event.type == KEYDOWN:
+            if event.type == pygame.KEYDOWN:
                 Controls(event.key)
 
         if timer > CLOCK:
             tetromino.TetrominoFall()
             CLOCK += TIME_INTERVAL
+
         if tetromino.Landed():
-            NewTetromino()
+            tetromino.AddToStack()
+            playfield.ClearLines()
+
+            if playfield.CheckLoss():
+                playfield.ClearStack()
+
+            tetromino = NewTetromino()
         
         playfield.DrawStack()
         pygame.display.update()

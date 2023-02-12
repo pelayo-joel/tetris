@@ -1,6 +1,6 @@
-from const import *
+import math
 import widgets
-
+from const import *
 
 
 class PlayField(widgets.GridMap):
@@ -8,35 +8,54 @@ class PlayField(widgets.GridMap):
         super().__init__(*args, **kwargs)
         self.__stackGroup = pygame.sprite.Group()
         self.stack = [[None] * self.nColumns for i in range(self.nRows)]
+
+        self.__score = {"Single":100, "Double":300, "Triple":700, "Tetris":1200}
+        self.__currentScore = 0
     
     def FillCell(self, landedTile):
         self.__stackGroup.add(landedTile)
-        self.stack[int(landedTile.pos.y)][int(landedTile.pos.x)] = landedTile
+        y, x = max(min(self.nRows, int(landedTile.pos.y)), 0), max(min(self.nColumns, int(landedTile.pos.x)), 0)
+        print(y, x)
+        self.stack[y][x] = landedTile
 
     def DrawStack(self):
         self.__stackGroup.draw(self.gridSurf)
 
     def ClearStack(self):
         self.__stackGroup.empty()
-        self.stack = []
+        self.stack = [[None] * self.nColumns for i in range(self.nRows)]
 
     def ClearLines(self):
         for row in range((len(self.stack) - 1), 0, -1):
             comboLines = 0
             for comboRow in range(row, 0, -1):
-                if None not in self.stack[comboRow] and comboLines < 5:
+
+                if None not in self.stack[comboRow]:
                     comboLines += 1
                     for tile in self.stack[comboRow]:
                         tile.kill()
-                else:
-                    lineFall = 0
-                    for tile in self.__stackGroup:
-                        if tile.rect.y < row * PLAYFIELD_CELL_SIZE:
-                            tile.rect.y += comboLines * PLAYFIELD_CELL_SIZE
-                    for gap in range(row, 0, -1):
-                        self.stack[gap] = self.stack[comboRow - lineFall]
-                        lineFall += 1
+                    self.stack[comboRow] = [None] * self.nColumns
+
+                elif None in self.stack[comboRow] and comboLines > 0:
+                    for upperRow in range(comboRow, 0, -1):
+                        for upperTile in range(self.nColumns):
+
+                            if self.stack[upperRow][upperTile] != None:
+                                self.stack[upperRow][upperTile].rect.y += comboLines * PLAYFIELD_CELL_SIZE
+                                self.stack[upperRow + comboLines][upperTile], self.stack[upperRow][upperTile] = self.stack[upperRow][upperTile], self.stack[upperRow + comboLines][upperTile]
+                    
                     break
+
+                else:
+                    break
+
+            if comboLines > 0:
+                scoreKeys = list(self.__score.keys())
+                self.__currentScore += self.__score[scoreKeys[comboLines - 1]]
+                pygame.mixer.Sound.play(SoundEffects["ClearedLines"][scoreKeys[comboLines - 1]])
+
+                if comboLines > 3:
+                    pygame.mixer.Sound.play(SoundEffects["NICE"])
 
     def CheckLoss(self):
         for tile in self.__stackGroup:
@@ -44,6 +63,9 @@ class PlayField(widgets.GridMap):
                 return True
 
         return False
+
+    def GetScore(self):
+        return self.__currentScore
 
         
     
@@ -95,11 +117,12 @@ class Tetromino:
         self.shape = random.choice(list(Tetrominoes.keys()))
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
+        self.__tiles = self.__Tetromino()
+        self.__landed = False
         
-        self.tiles = self.__Tetromino()
         self.rStateSelector = 0
         self.rOrientation = RotationState[self.rStateSelector]
-        self.__landed = False
+
 
 
     """Private methods"""
@@ -122,45 +145,46 @@ class Tetromino:
 
         if orientation == "Clockwise":
             for kick in WallKickData[kickSet][RotationState[(self.rStateSelector + 1) % len(RotationState)]]:
-                testKick = [self.tiles[0].pos + kick]
+                testKick = [self.__tiles[0].pos + kick]
                 for i in range                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      (1, 4):
-                    testKick.append(self.tiles[i].TileRotation(self.tiles[0].pos, orientation) + kick)
+                    testKick.append(self.__tiles[i].TileRotation(self.__tiles[0].pos, orientation) + kick)
                 
-                if not self.Colliding(testKick):
+                if not self.__Colliding(testKick):
+                    pygame.mixer.Sound.play(SoundEffects["Rotate"])
                     self.TetrominoUpdate(testKick)
                     break
 
         elif orientation == "CounterClockwise":
             for kick in WallKickData[kickSet][RotationState[(self.rStateSelector - 1) % len(RotationState)]]:
-                testKick = [self.tiles[0].pos - kick]
+                testKick = [self.__tiles[0].pos - kick]
                 for i in range(1, 4):
-                    testKick.append(self.tiles[i].TileRotation(self.tiles[0].pos, orientation) - kick)
+                    testKick.append(self.__tiles[i].TileRotation(self.__tiles[0].pos, orientation) - kick)
                 
-                if not self.Colliding(testKick):
+                if not self.__Colliding(testKick):
+                    pygame.mixer.Sound.play(SoundEffects["Rotate"])
                     self.TetrominoUpdate(testKick)
                     break
 
-
-    """Public methods"""
-
     #Defines the Tetromino movement
-    def Move(self, direction:pygame.Vector2):
+    def __Move(self, direction:pygame.Vector2):
         nextPos = []
-        for tile in self.tiles:
+        for tile in self.__tiles:
             nextPos.append(tile.pos + direction)
 
-        if not self.Colliding(nextPos):
+        if not self.__Colliding(nextPos):
             self.TetrominoUpdate(nextPos)
         elif direction == DIRECTIONS['down']:
             self.__landed = True
+            pygame.mixer.Sound.play(SoundEffects["Landed"])
 
     #Rotates the tetromino in clockwise or counterclockwise rotation
-    def Rotate(self, clockOrientation):
+    def __Rotate(self, clockOrientation):
         nextPos = []
-        for tile in self.tiles:
-            nextPos.append(tile.TileRotation(self.tiles[0].pos, clockOrientation))
+        for tile in self.__tiles:
+            nextPos.append(tile.TileRotation(self.__tiles[0].pos, clockOrientation))
 
-        if not self.Colliding(nextPos):
+        if not self.__Colliding(nextPos):
+            pygame.mixer.Sound.play(SoundEffects["Rotate"])
             self.TetrominoUpdate(nextPos)
             
             if clockOrientation == "Clockwise":
@@ -176,37 +200,69 @@ class Tetromino:
             
         self.rOrientation = RotationState[(self.rStateSelector % len(RotationState))]
 
-    #Checks if pos is colliding
-    def Colliding(self, posToCheck):
-        return any(map(Tile.TileCollision, self.tiles, posToCheck))
+    def __Drop(self):
+        while not self.__landed:
+            self.__Move(DIRECTIONS["down"])
+        #pygame.mixer.Sound.play(SoundEffects["Drop"])
     
+
+    #Checks if pos is colliding
+    def __Colliding(self, posToCheck):
+        return any(map(Tile.TileCollision, self.__tiles, posToCheck))
+    
+
+    
+    """Public methods"""
+    
+
     def TetrominoUpdate(self, newTile):
         for i in range(4):
-            self.tiles[i].pos = newTile[i]
-            self.tiles[i].TileUpdate()
+            self.__tiles[i].pos = newTile[i]
+            self.__tiles[i].TileUpdate()
         self.playfield.GridUpdate()
         self.__tileSpriteGroup.update()
         self.__tileSpriteGroup.draw(self.playfield.gridSurf)
 
     def TetrominoFall(self):
-        self.Move(DIRECTIONS["down"])
+        self.__Move(DIRECTIONS["down"])
+        if pygame.key.get_pressed()[pygame.K_DOWN]:
+            pygame.mixer.Sound.play(SoundEffects["Move"])
 
-    def Drop(self):
-        while not self.__landed:
-            self.Move(DIRECTIONS["down"])
-
-    def Landed(self):
-        return self.__landed
-    
     def RerollShape(self, bag, current):
         while bag.count(self.shape) >= 2 or self.shape == current:
             self.shape = random.choice(list(Tetrominoes.keys()))
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
-        self.tiles = self.__Tetromino()
+        self.__tiles = self.__Tetromino()
 
     def AddToStack(self):
-        for tile in self.tiles:
+        for tile in self.__tiles:
             self.playfield.FillCell(tile)
 
+    def TetroControls(self, key):
+        if key == pygame.K_q and self.shape != "O" and not self.Landed():
+            self.__Rotate("CounterClockwise")
+        if key == pygame.K_w and self.shape != "O" and not self.Landed():
+            self.__Rotate("Clockwise")
+        if key == pygame.K_LEFT and not self.Landed():
+            self.__Move(DIRECTIONS["left"])
+            pygame.mixer.Sound.play(SoundEffects["Move"])
+        if key == pygame.K_RIGHT and not self.Landed():
+            self.__Move(DIRECTIONS["right"])
+            pygame.mixer.Sound.play(SoundEffects["Move"])
+        if key == pygame.K_UP:
+            self.__Drop()
 
+    def Landed(self):
+        return self.__landed
+
+    def Hold(self, holdedTetro):
+        if holdedTetro == None:
+            return self
+        else:
+            translation = self.__tiles[0].pos - holdedTetro.__tiles[0].pos
+
+            for tile in holdedTetro.__tiles:
+                tile.pos += translation
+
+            return holdedTetro
