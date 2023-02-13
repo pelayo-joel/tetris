@@ -6,7 +6,9 @@ pygame.mixer.init()
 
 FPS = 60
 CLOCK = 0
-TIME_INTERVAL = 300
+TIME_INTERVAL = 1000
+FAST_TIME_INTERVAL = 100
+LOCK_DELAY = 3
 DISPLAY_BG = 0
 PLAYFIELD_BG = 0
 
@@ -18,7 +20,7 @@ TILE_PATH = f"images-src/TetrominoBlock/"
 FONT_PATH = "Fonts/Tetris.ttf"
 
 
-DISPLAY_RES = DISPLAY_W, DISPLAY_H = 550, 690
+DISPLAY_RES = DISPLAY_W, DISPLAY_H = 600, 660
 
 PLAYFIELD_CELL_SIZE = 30
 PLAYFIELD_COLUMNS, PLAYFIELD_ROWS = 10, 20
@@ -72,6 +74,15 @@ SoundEffects = {
     "NICE":pygame.mixer.Sound(f"{SFX_PATH}NICE.mp3")
 }
 
+
+for sfx in SoundEffects:
+    if type(SoundEffects[sfx]) is dict:
+        for lineSound in SoundEffects[sfx]:
+            SoundEffects[sfx][lineSound].set_volume(0.35)
+    else:
+        SoundEffects[sfx].set_volume(0.5)
+
+SoundEffects["NICE"].set_volume(1.0)
 
 """{
         "Single":pygame.mixer.Sound(f"{SFX_PATH}single.wav"),

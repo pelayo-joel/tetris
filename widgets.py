@@ -427,7 +427,7 @@ class GfxButton:
                     gfxdraw.filled_circle(self.frame, cornerPosX, cornerPosY, borderR-1, self.fill)
                 gfxdraw.box(self.frame, pygame.Rect(self.left-borderR, self.top, self.width+(borderR*2), self.height), self.fill)
                 gfxdraw.box(self.frame, pygame.Rect(self.left, self.top-borderR, self.width, self.height+(borderR*2)), self.fill)
-            self.buttonFormat = gfxdraw.rectangle(self.frame, pygame.Rect(self.left, self.top, self.width, self.height), self.fill)
+            self.buttonFormat = gfxdraw.box(self.frame, pygame.Rect(self.left, self.top, self.width, self.height), self.fill)
             self.isImage = False
 
 

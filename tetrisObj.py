@@ -1,6 +1,6 @@
-import math
 import widgets
 from const import *
+from pygame import gfxdraw
 
 
 class PlayField(widgets.GridMap):
@@ -11,11 +11,18 @@ class PlayField(widgets.GridMap):
 
         self.__score = {"Single":100, "Double":300, "Triple":700, "Tetris":1200}
         self.__currentScore = 0
+        self.__clearedLines = 0
+        self.__getScoredPoints = 0
+        self.__playfieldLvl = 0
+
+        self.multiplierTSpin = 1.0
     
+    def __Scoring(self):
+        self.__currentScore += int(self.__getScoredPoints * max(min(3.0, self.multiplierTSpin), 1.0))
+
     def FillCell(self, landedTile):
         self.__stackGroup.add(landedTile)
         y, x = max(min(self.nRows, int(landedTile.pos.y)), 0), max(min(self.nColumns, int(landedTile.pos.x)), 0)
-        print(y, x)
         self.stack[y][x] = landedTile
 
     def DrawStack(self):
@@ -42,7 +49,8 @@ class PlayField(widgets.GridMap):
 
                             if self.stack[upperRow][upperTile] != None:
                                 self.stack[upperRow][upperTile].rect.y += comboLines * PLAYFIELD_CELL_SIZE
-                                self.stack[upperRow + comboLines][upperTile], self.stack[upperRow][upperTile] = self.stack[upperRow][upperTile], self.stack[upperRow + comboLines][upperTile]
+                                self.stack[upperRow + comboLines][upperTile], self.stack[upperRow][upperTile] = \
+                                    self.stack[upperRow][upperTile], self.stack[upperRow + comboLines][upperTile]
                     
                     break
 
@@ -50,12 +58,19 @@ class PlayField(widgets.GridMap):
                     break
 
             if comboLines > 0:
+                self.__getScoredPoints = 0
                 scoreKeys = list(self.__score.keys())
-                self.__currentScore += self.__score[scoreKeys[comboLines - 1]]
+
+                self.__clearedLines += comboLines
+                self.__getScoredPoints = self.__score[scoreKeys[comboLines - 1]]
+
+                self.__Scoring()
                 pygame.mixer.Sound.play(SoundEffects["ClearedLines"][scoreKeys[comboLines - 1]])
 
                 if comboLines > 3:
                     pygame.mixer.Sound.play(SoundEffects["NICE"])
+
+                self.multiplierTSpin = 1.0
 
     def CheckLoss(self):
         for tile in self.__stackGroup:
@@ -64,11 +79,31 @@ class PlayField(widgets.GridMap):
 
         return False
 
-    def GetScore(self):
+    def GetScoredPoints(self):
+        return None
+
+    def GetFullScore(self):
         return self.__currentScore
 
         
     
+
+
+class InGame_UI(widgets.Frame):
+    def __init__(self, *args, playfieldToMonitor:PlayField, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.playfield = playfieldToMonitor
+        self.label = widgets.TextLabel(self, "Tetris 69", 30, FONT_PATH, pourcentMode=True, centerX=True, posY=5)
+        pygame.draw.rect(self, (100, 100, 180), pygame.Rect(0, 0, self.width - 10, self.height - 10), 3)
+        self.set_colorkey((0, 0, 0))
+        self.__scoreWindow = widgets.Frame(self, (self.width - 10, 100), (0, 500), color=(10, 10, 10))
+        #self.__nextWindow
+        #self.__holdWindow
+        #self.__pauseWindow
+
+        self.__scoreWindow.ActiveFrame()
+
+
 
 
 
@@ -122,6 +157,8 @@ class Tetromino:
         
         self.rStateSelector = 0
         self.rOrientation = RotationState[self.rStateSelector]
+        self.wallKicked = False
+        self.spinComboLap = 0
 
 
 
@@ -152,6 +189,10 @@ class Tetromino:
                 if not self.__Colliding(testKick):
                     pygame.mixer.Sound.play(SoundEffects["Rotate"])
                     self.TetrominoUpdate(testKick)
+                    self.wallKicked = True
+                    if self.wallKicked:
+                        self.playfield.multiplierTSpin += 0.5
+
                     break
 
         elif orientation == "CounterClockwise":
@@ -163,7 +204,18 @@ class Tetromino:
                 if not self.__Colliding(testKick):
                     pygame.mixer.Sound.play(SoundEffects["Rotate"])
                     self.TetrominoUpdate(testKick)
+                    self.wallKicked = True
+                    if self.wallKicked:
+                        self.playfield.multiplierTSpin += 0.5
+
                     break
+
+    """def __LockDelay(self):
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT + 1:
+                self.__landed = True
+                pygame.mixer.Sound.play(SoundEffects["Landed"])"""
+            
 
     #Defines the Tetromino movement
     def __Move(self, direction:pygame.Vector2):
@@ -177,6 +229,15 @@ class Tetromino:
             self.__landed = True
             pygame.mixer.Sound.play(SoundEffects["Landed"])
 
+            """timeEvent = pygame.USEREVENT + 1
+            pygame.time.set_timer(timeEvent, (LOCK_DELAY * 1000))
+            print(timeEvent, LOCK_DELAY, pygame.event.get())
+            for event in pygame.event.get():
+                if event.type == timeEvent:
+                    self.__landed = True
+                    pygame.mixer.Sound.play(SoundEffects["Landed"])"""
+            #self.__LockDelay()
+
     #Rotates the tetromino in clockwise or counterclockwise rotation
     def __Rotate(self, clockOrientation):
         nextPos = []
@@ -186,6 +247,8 @@ class Tetromino:
         if not self.__Colliding(nextPos):
             pygame.mixer.Sound.play(SoundEffects["Rotate"])
             self.TetrominoUpdate(nextPos)
+            self.wallKicked = False
+            self.playfield.multiplierTSpin = 1.0
             
             if clockOrientation == "Clockwise":
                 self.rStateSelector += 1
@@ -199,6 +262,7 @@ class Tetromino:
             self.__WallKickTesting(clockOrientation)
             
         self.rOrientation = RotationState[(self.rStateSelector % len(RotationState))]
+        print(self.playfield.multiplierTSpin)
 
     def __Drop(self):
         while not self.__landed:
@@ -225,6 +289,13 @@ class Tetromino:
 
     def TetrominoFall(self):
         self.__Move(DIRECTIONS["down"])
+        self.spinComboLap += 1
+
+        if self.spinComboLap == 3:
+            self.spinComboLap = 0
+            self.wallKicked = False
+            self.playfield.multiplierTSpin += 1.0
+
         if pygame.key.get_pressed()[pygame.K_DOWN]:
             pygame.mixer.Sound.play(SoundEffects["Move"])
 
@@ -264,5 +335,8 @@ class Tetromino:
 
             for tile in holdedTetro.__tiles:
                 tile.pos += translation
+
+            while holdedTetro.rOrientation != "0":
+                holdedTetro.__Rotate("Clockwise")
 
             return holdedTetro
