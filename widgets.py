@@ -8,12 +8,14 @@ from pygame import gfxdraw
 """Created a 'Frame' object, it inherits the 'Surface' class from pygame"""
 class Frame(pygame.Surface):
     """Constructor"""
-    def __init__(self, parent:pygame.Surface, size:tuple, pos:tuple=(0, 0), color:tuple=(0, 0, 0)):
+    def __init__(self, parent:pygame.Surface, size:tuple, pos:tuple=(0, 0), color:tuple=(0, 0, 0), surfImage:pygame.image=None):
         pygame.Surface.__init__(self, size)
+        self.set_colorkey((0, 0, 0))
         self.width, self.height = size[0], size[1]
         self.pos = (pos[0], pos[1])
         self.color = color
         self.parent = parent
+        self.surfImage = surfImage
         self.fill(self.color)
 
 
@@ -26,12 +28,24 @@ class Frame(pygame.Surface):
     #Returns the Frame's color
     def get_SurfColor(self):
         return self.color
+    
+    def get_SurfSize(self):
+        return (self.width, self.height)
 
     #Enables the frame, called every frame in pygame's mainloop and also in other objects
-    def ActiveFrame(self, drawPos:tuple=()):
+    def ActiveFrame(self, drawPos:tuple=(), image:pygame.image=None):
         if drawPos == ():
             drawPos = self.pos
-        self.parent.blit(self, drawPos)
+    
+        if image != None:
+            self.surfImage = pygame.transform.smoothscale(image, (self.width, self.height))
+            self.parent.blit(self.surfImage, drawPos)
+        elif self.surfImage != None:
+            self.surfImage = pygame.transform.smoothscale(self.surfImage, (self.width, self.height))
+            self.parent.blit(self.surfImage, drawPos)
+        else:
+            self.parent.blit(self, drawPos)
+
 
 
 
@@ -47,11 +61,15 @@ class TextLabel:
         self.font = font
         self.text = text
         self.color = color
-        self.bg = self.frame.get_SurfColor()
         self.centerX, self.centerY, self.pourcentMode, self.posX, self.posY = centerX, centerY, pourcentMode, posX, posY
 
-        if bgColor != None:
-            self.bg = bgColor
+        try:
+            self.bg = self.frame.get_SurfColor()
+            if bgColor != None:
+                self.bg = bgColor
+        except AttributeError:
+            self.bg = (0, 0, 0)
+            
         if self.font == None:
             self.textFont = pygame.font.Font(FONT_PATH, self.textSize)
         else:

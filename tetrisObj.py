@@ -4,8 +4,15 @@ from pygame import gfxdraw
 
 
 class PlayField(widgets.GridMap):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, border:bool=False, borderWidth:int=0, borderColor:tuple=(255, 255, 255), **kwargs):
         super().__init__(*args, **kwargs)
+        
+        self.border = borderWidth
+        offset = borderWidth - 2
+        self.rect = pygame.Rect(self.left - offset, self.top - offset, self.gridSurf.get_width() + (offset * 2), self.gridSurf.get_height() + (offset * 2))
+        if border:
+            pygame.draw.rect(self.frame, borderColor, self.rect, borderWidth)
+        
         self.__stackGroup = pygame.sprite.Group()
         self.stack = [[None] * self.nColumns for i in range(self.nRows)]
 
@@ -13,12 +20,10 @@ class PlayField(widgets.GridMap):
         self.__currentScore = 0
         self.__clearedLines = 0
         self.__getScoredPoints = 0
-        self.__playfieldLvl = 0
+        self.__playfieldLvl = 1
 
         self.multiplierTSpin = 1.0
     
-    def __Scoring(self):
-        self.__currentScore += int(self.__getScoredPoints * max(min(3.0, self.multiplierTSpin), 1.0))
 
     def FillCell(self, landedTile):
         self.__stackGroup.add(landedTile)
@@ -32,7 +37,7 @@ class PlayField(widgets.GridMap):
         self.__stackGroup.empty()
         self.stack = [[None] * self.nColumns for i in range(self.nRows)]
 
-    def ClearLines(self):
+    def ClearingLines(self):
         for row in range((len(self.stack) - 1), 0, -1):
             comboLines = 0
             for comboRow in range(row, 0, -1):
@@ -64,8 +69,12 @@ class PlayField(widgets.GridMap):
                 self.__clearedLines += comboLines
                 self.__getScoredPoints = self.__score[scoreKeys[comboLines - 1]]
 
-                self.__Scoring()
+                print(max(min(3.0, self.multiplierTSpin), 1.0))
+                self.__currentScore += int(self.__getScoredPoints * max(min(3.0, self.multiplierTSpin), 1.0))
                 pygame.mixer.Sound.play(SoundEffects["ClearedLines"][scoreKeys[comboLines - 1]])
+
+                '''if self.__playfieldLvl * 10 <= self.__clearedLines:
+                    self.__playfieldLvl += 1'''
 
                 if comboLines > 3:
                     pygame.mixer.Sound.play(SoundEffects["NICE"])
@@ -75,6 +84,9 @@ class PlayField(widgets.GridMap):
     def CheckLoss(self):
         for tile in self.__stackGroup:
             if tile.rect.y < 0:
+                self.__playfieldLvl = 1
+                self.__currentScore = 0
+                LOCK_DELAY = 1.5
                 return True
 
         return False
@@ -84,24 +96,28 @@ class PlayField(widgets.GridMap):
 
     def GetFullScore(self):
         return self.__currentScore
+    
+    def GetPlayfieldLvl(self):
+        return self.__playfieldLvl
+    
+    def PlayfieldLvlUp(self):
+        print(self.__playfieldLvl, self.__clearedLines)
+        if self.__playfieldLvl * 5 <= self.__clearedLines:
+            self.__playfieldLvl += 1
+
+            if self.__playfieldLvl % 10 == 0:
+                LOCK_DELAY -= 0.2
+
+            return True
+    
 
         
     
 
 
-class InGame_UI(widgets.Frame):
-    def __init__(self, *args, playfieldToMonitor:PlayField, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.playfield = playfieldToMonitor
-        self.label = widgets.TextLabel(self, "Tetris 69", 30, FONT_PATH, pourcentMode=True, centerX=True, posY=5)
-        pygame.draw.rect(self, (100, 100, 180), pygame.Rect(0, 0, self.width - 10, self.height - 10), 3)
-        self.set_colorkey((0, 0, 0))
-        self.__scoreWindow = widgets.Frame(self, (self.width - 10, 100), (0, 500), color=(10, 10, 10))
-        #self.__nextWindow
-        #self.__holdWindow
-        #self.__pauseWindow
 
-        self.__scoreWindow.ActiveFrame()
+
+
 
 
 
@@ -153,7 +169,10 @@ class Tetromino:
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
         self.__tiles = self.__Tetromino()
+        self.__touchedGround = False
         self.__landed = False
+        self.__dropping = False
+        self.__lockDelay = 1000
         
         self.rStateSelector = 0
         self.rOrientation = RotationState[self.rStateSelector]
@@ -226,8 +245,11 @@ class Tetromino:
         if not self.__Colliding(nextPos):
             self.TetrominoUpdate(nextPos)
         elif direction == DIRECTIONS['down']:
-            self.__landed = True
-            pygame.mixer.Sound.play(SoundEffects["Landed"])
+            self.__touchedGround = True
+            self.playfield.GridUpdate()
+            self.__tileSpriteGroup.update()
+            self.__tileSpriteGroup.draw(self.playfield.gridSurf)
+            #pygame.mixer.Sound.play(SoundEffects["Landed"])
 
             """timeEvent = pygame.USEREVENT + 1
             pygame.time.set_timer(timeEvent, (LOCK_DELAY * 1000))
@@ -265,14 +287,33 @@ class Tetromino:
         print(self.playfield.multiplierTSpin)
 
     def __Drop(self):
-        while not self.__landed:
+        self.__lockDelay = 0
+        self.__dropping = True
+        print(self.__lockDelay)
+        while not self.__touchedGround:
             self.__Move(DIRECTIONS["down"])
+            self.playfield.DrawStack()
+
         #pygame.mixer.Sound.play(SoundEffects["Drop"])
     
 
     #Checks if pos is colliding
     def __Colliding(self, posToCheck):
         return any(map(Tile.TileCollision, self.__tiles, posToCheck))
+    
+    def __IsStuck(self):
+        leftCollide = []
+        rightCollide = []
+
+        for tile in self.__tiles:
+            leftCollide.append(tile.pos + DIRECTIONS["left"])
+            rightCollide.append(tile.pos + DIRECTIONS["right"])
+
+
+        if self.__Colliding(leftCollide) and self.__Colliding(rightCollide):
+            return True
+        
+        return False
     
 
     
@@ -291,10 +332,10 @@ class Tetromino:
         self.__Move(DIRECTIONS["down"])
         self.spinComboLap += 1
 
-        if self.spinComboLap == 3:
+        if self.spinComboLap == 2:
             self.spinComboLap = 0
             self.wallKicked = False
-            self.playfield.multiplierTSpin += 1.0
+            self.playfield.multiplierTSpin = 1.0
 
         if pygame.key.get_pressed()[pygame.K_DOWN]:
             pygame.mixer.Sound.play(SoundEffects["Move"])
@@ -311,20 +352,45 @@ class Tetromino:
             self.playfield.FillCell(tile)
 
     def TetroControls(self, key):
-        if key == pygame.K_q and self.shape != "O" and not self.Landed():
+        if key == pygame.K_q and self.shape != "O" and not self.__landed:
             self.__Rotate("CounterClockwise")
-        if key == pygame.K_w and self.shape != "O" and not self.Landed():
+        if key == pygame.K_w and self.shape != "O" and not self.__landed:
             self.__Rotate("Clockwise")
-        if key == pygame.K_LEFT and not self.Landed():
+        if key == pygame.K_LEFT and not self.__landed:
             self.__Move(DIRECTIONS["left"])
             pygame.mixer.Sound.play(SoundEffects["Move"])
-        if key == pygame.K_RIGHT and not self.Landed():
+        if key == pygame.K_RIGHT and not self.__landed:
             self.__Move(DIRECTIONS["right"])
             pygame.mixer.Sound.play(SoundEffects["Move"])
         if key == pygame.K_UP:
             self.__Drop()
 
-    def Landed(self):
+    def get_TouchedGround(self):
+        return self.__touchedGround
+
+    def Landed(self, currentTime=0):
+        if self.__touchedGround:
+            delay = currentTime + (LOCK_DELAY * self.__lockDelay)
+
+            touchingGround = []
+            for tile in self.__tiles:
+                touchingGround.append(tile.pos + DIRECTIONS["down"])
+            
+
+            if self.__dropping:
+                delay = pygame.time.get_ticks()
+
+
+            if pygame.time.get_ticks() >= delay or self.__IsStuck():
+                pygame.mixer.Sound.play(SoundEffects["Landed"])
+                self.__landed = True
+                self.__touchedGround = False
+                self.__lockDelay = 1000
+                self.__dropping = False
+
+            elif not self.__Colliding(touchingGround):
+                self.__touchedGround = False
+        
         return self.__landed
 
     def Hold(self, holdedTetro):
@@ -340,3 +406,62 @@ class Tetromino:
                 holdedTetro.__Rotate("Clockwise")
 
             return holdedTetro
+
+
+
+
+
+
+class InGame_UI:
+    def __init__(self, frame:pygame.Surface, playfieldToMonitor:PlayField):
+        self.frame = frame
+        self.playfield = playfieldToMonitor
+        self.panelsWidth = 150
+        self.panelsHeightMax = self.playfield.rect.height
+
+        sidePanelImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_cropped(2).png")
+        holdWindowBorderImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_hold(2).png")
+
+        self.__sidePanel = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax), pos=(self.playfield.left + self.playfield.gridSurf.get_width(), self.playfield.top - self.playfield.border + 2), surfImage=sidePanelImage)
+        #self.__scoreWindow = widgets.Frame(self.__sidePanel, (self.width - 10, self.height / 2), (0, self.height / 2), color=(10, 10, 10))
+        self.__holdWindowBorder = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax / 4), pos=(self.playfield.left - self.panelsWidth, self.playfield.top - self.playfield.border + 2), surfImage=holdWindowBorderImage)
+        self.holdWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
+        self.__scoreSurface = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth - (self.playfield.border * 3), self.panelsHeightMax /2), pos=(self.playfield.border, self.playfield.border * 3), color=(1, 1, 1))
+        
+        self.holdLabel = widgets.TextLabel(self.__holdWindowBorder.surfImage, "Hold", 17, FONT_PATH, color=(1, 1, 1), pourcentMode=True, posX=33, posY=8)
+        self.sidePanelLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Status", 17, FONT_PATH, color=(1, 1, 1), pourcentMode=True, centerX=True, posY=2)
+        self.scoreLabel = widgets.TextLabel(self.__scoreSurface, f"Score: ", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=38, posY=24)
+        self.score = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetFullScore()}", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=32)
+        self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=39, posY=8)
+        
+        #pygame.draw.rect(self, (100, 100, 180), pygame.Rect(0, 0, self.width - 10, self.height - 10), 3)
+        #self.__holdWindow = PlayField(self.parent, (PLAYFIELD_CELL_SIZE - 10, PLAYFIELD_CELL_SIZE - 10), self.playfield.left - (self.width - 6), self.playfield.top + 20, 6, 6)
+        #self.__nextWindow
+        #self.__pauseWindow
+
+    def UpdateUI(self):
+        #self.__holdWindowBorder.surfImage = pygame.transform.smoothscale(self.__holdWindowBorder.surfImage, (self.__holdWindowBorder.width, self.playfield.gridSurf.height + self.playfield.border + 1))
+
+        self.__holdWindowBorder.ActiveFrame()
+
+        self.__sidePanel.ActiveFrame()
+        self.__scoreSurface.ActiveFrame()
+        self.__sidePanel.surfImage.blit(self.__scoreSurface, (self.playfield.border, self.playfield.border * 3))
+        #self.__scoreWindow.ActiveFrame(image=pygame.image.load(f"{IMAGE_PATH}GameField-UI_score.png"))
+        
+        #self.label.textFrame.ActiveFrame()
+        #pygame.display.flip()
+
+    def UpdateHoldWindow(self, shape):
+        if shape != None:
+            holdImage = pygame.image.load(f"{TILE_PATH}{shape}-Shape.png")
+            holdImage = pygame.transform.smoothscale(holdImage, (PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
+            self.holdWindowEraser.fill((0, 0, 0))
+            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (holdImage.get_width() / 2)), (self.__holdWindowBorder.height / 2 - (holdImage.get_height() / 2) + 10)))
+            self.__holdWindowBorder.surfImage.blit(holdImage, ((self.__holdWindowBorder.width / 2 - (holdImage.get_width() / 2)), (self.__holdWindowBorder.height / 2 - (holdImage.get_height() / 2) + 10)))
+
+    def UpdateStatusWindow(self):
+        print(self.playfield.GetFullScore())
+        #{self.playfield.GetFullScore()}
+        self.score.NewText(f"{self.playfield.GetFullScore()}")
+        self.lvlLabel.NewText(f"Lvl: {self.playfield.GetPlayfieldLvl()}")
