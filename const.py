@@ -60,6 +60,7 @@ WallKickData = {
 SoundEffects = {
     "Move":pygame.mixer.Sound(f"{SFX_PATH}move.wav"),
     "Rotate":pygame.mixer.Sound(f"{SFX_PATH}rotate.wav"),
+    "GroundTouch":pygame.mixer.Sound(f"{SFX_PATH}onground.wav"),
     "Landed":pygame.mixer.Sound(f"{SFX_PATH}landed.wav"),
     "Drop":pygame.mixer.Sound(f"{SFX_PATH}drop.wav"),
     "Hold":pygame.mixer.Sound(f"{SFX_PATH}hold.wav"),

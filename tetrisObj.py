@@ -1,6 +1,5 @@
 import widgets
 from const import *
-from pygame import gfxdraw
 
 
 class PlayField(widgets.GridMap):
@@ -10,6 +9,7 @@ class PlayField(widgets.GridMap):
         self.border = borderWidth
         offset = borderWidth - 2
         self.rect = pygame.Rect(self.left - offset, self.top - offset, self.gridSurf.get_width() + (offset * 2), self.gridSurf.get_height() + (offset * 2))
+        
         if border:
             pygame.draw.rect(self.frame, borderColor, self.rect, borderWidth)
         
@@ -79,13 +79,20 @@ class PlayField(widgets.GridMap):
 
     def CheckLoss(self):
         for tile in self.__stackGroup:
+
             if tile.rect.y < 0:
-                self.__playfieldLvl = 1
-                self.__currentScore = 0
-                LOCK_DELAY = 1.5
+                self.ClearStatus()
+                self.ClearStack()
                 return True
 
         return False
+    
+    def ClearStatus(self):
+        global LOCK_DELAY
+        self.__playfieldLvl = 1
+        self.__currentScore = 0
+        self.__clearedLines = 0
+        LOCK_DELAY = 1.5
 
     def GetScoredPoints(self):
         return None
@@ -100,7 +107,7 @@ class PlayField(widgets.GridMap):
         return self.__clearedLines
     
     def PlayfieldLvlUp(self):
-        print(self.__playfieldLvl, self.__clearedLines)
+        global LOCK_DELAY
         if self.__playfieldLvl * 5 <= self.__clearedLines:
             self.__playfieldLvl += 1
 
@@ -165,10 +172,11 @@ class Tetromino:
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
         self.__tiles = self.__Tetromino()
+        self.__lockDelay = 1000
         self.__touchedGround = False
         self.__landed = False
         self.__dropping = False
-        self.__lockDelay = 1000
+        self.inDelay = False
         
         self.rStateSelector = 0
         self.rOrientation = RotationState[self.rStateSelector]
@@ -321,6 +329,7 @@ class Tetromino:
     def RerollShape(self, bag, current):
         while bag.count(self.shape) >= 2 or self.shape == current:
             self.shape = random.choice(list(Tetrominoes.keys()))
+
         self.tileSprite = pygame.image.load(f"{TILE_PATH}Block{self.shape}.png").convert_alpha()
         self.__tileSpriteGroup = pygame.sprite.Group()
         self.__tiles = self.__Tetromino()
@@ -348,6 +357,9 @@ class Tetromino:
 
     def Landed(self, currentTime=0):
         if self.__touchedGround:
+            if not self.inDelay:
+                pygame.mixer.Sound.play(SoundEffects["GroundTouch"])
+                self.inDelay = True
             delay = currentTime + (LOCK_DELAY * self.__lockDelay)
 
             touchingGround = []
@@ -365,9 +377,11 @@ class Tetromino:
                 self.__touchedGround = False
                 self.__lockDelay = 1000
                 self.__dropping = False
+                self.inDelay = False
 
             elif not self.__Colliding(touchingGround):
                 self.__touchedGround = False
+                self.inDelay = False
         
         return self.__landed
 
@@ -375,16 +389,23 @@ class Tetromino:
         if holdedTetro == None:
             return self
         else:
+            limitRotate = 0
+            checkCollision = []
             translation = self.__tiles[0].pos - holdedTetro.__tiles[0].pos
 
             for tile in holdedTetro.__tiles:
                 tile.pos += translation
+                checkCollision.append(tile.pos)
 
-            while holdedTetro.rOrientation != "0":
+            while (holdedTetro.rOrientation != "0" and limitRotate < 3) or (holdedTetro.__Colliding(checkCollision) and limitRotate < 3):
                 holdedTetro.__Rotate("Clockwise")
+                limitRotate += 1
 
+            if holdedTetro.__Colliding(checkCollision):
+                return False
+                    
+                
             return holdedTetro
-
 
 
 
@@ -397,6 +418,9 @@ class InGame_UI:
         self.panelsWidth = 150
         self.panelsHeightMax = self.playfield.rect.height
 
+        self.pieceImageWidth = 0
+        self.pieceImageHeight = 0
+
         sidePanelImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_cropped(2).png")
         holdWindowBorderImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_hold(2).png")
         nextWindowImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_next.png")
@@ -407,6 +431,7 @@ class InGame_UI:
         self.__nextWindow = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth, self.panelsHeightMax / 3), surfImage=nextWindowImage)
         
         self.holdWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
+        self.holdWindowEraser.fill((0, 0, 0))
         self.nextWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
         
         self.holdLabel = widgets.TextLabel(self.__holdWindowBorder.surfImage, "Hold", 17, FONT_PATH, color=(1, 1, 1), pourcentMode=True, posX=33, posY=8)
@@ -416,8 +441,8 @@ class InGame_UI:
         self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=40, posY=8)
         self.scoreLabel = widgets.TextLabel(self.__scoreSurface, f"Score: ", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=38, posY=24)
         self.score = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetFullScore()}", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=32)
-        self.nLinesClearedLab = widgets.TextLabel(self.__scoreSurface, f"Lines cleared:", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=40)
-        self.nLinesCleared = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=48)
+        self.nLinesClearedLab = widgets.TextLabel(self.__scoreSurface, f"Cleared:", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=31, posY=56)
+        self.nLinesCleared = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=64)
 
 
 
@@ -429,14 +454,17 @@ class InGame_UI:
         self.__sidePanel.surfImage.blit(self.__nextWindow.surfImage, (self.playfield.border - 10, self.__scoreSurface.height + 50))
         self.__sidePanel.surfImage.blit(self.__scoreSurface, (self.playfield.border, self.playfield.border * 3))
 
-    def UpdateHoldWindow(self, shape):
+    def UpdateHoldWindow(self, shape:pygame.image=None):
         if shape != None:
             holdImage = pygame.image.load(f"{TILE_PATH}{shape}-Shape.png")
             holdImage = pygame.transform.smoothscale(holdImage, (PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
+            self.pieceImageWidth, self.pieceImageHeight = holdImage.get_width(), holdImage.get_height()
 
+            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (self.pieceImageWidth / 2)), (self.__holdWindowBorder.height / 2 - (self.pieceImageHeight / 2) + 10)))
+            self.__holdWindowBorder.surfImage.blit(holdImage, ((self.__holdWindowBorder.width / 2 - (self.pieceImageWidth / 2)), (self.__holdWindowBorder.height / 2 - (self.pieceImageHeight / 2) + 10)))
+        else:
             self.holdWindowEraser.fill((0, 0, 0))
-            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (holdImage.get_width() / 2)), (self.__holdWindowBorder.height / 2 - (holdImage.get_height() / 2) + 10)))
-            self.__holdWindowBorder.surfImage.blit(holdImage, ((self.__holdWindowBorder.width / 2 - (holdImage.get_width() / 2)), (self.__holdWindowBorder.height / 2 - (holdImage.get_height() / 2) + 10)))
+            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (self.pieceImageWidth / 2)), (self.__holdWindowBorder.height / 2 - (self.pieceImageHeight / 2) + 10)))
 
     def UpdateNextWindow(self, shape):
         nextImage = pygame.image.load(f"{TILE_PATH}{shape}-Shape.png")
