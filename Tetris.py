@@ -2,7 +2,7 @@ from const import *
 from widgets import *
 from tetrisObj import *
 
-pygame.init()        
+pygame.init()
 pygame.display.set_caption('Tetris69')
 pygame.display.set_icon(pygame.image.load(f'{IMAGE_PATH}Tetris69-Logo.png'))
 bg = pygame.image.load(f"{IMAGE_PATH}bgPlayfield.png")
@@ -17,21 +17,27 @@ speed = TIME_INTERVAL
 #gfxButtonTest = GfxButton(DISPLAY, 220, DISPLAY_H, posX=330, posY=0, buttonLabel="Button")
 playfield = PlayField(DISPLAY, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 173, 50, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS, border=True, borderWidth=9, borderColor=(95, 250, 195))
 tetromino = Tetromino(playfield)
-GameUI= InGame_UI(DISPLAY, playfield)
+nextTetromino = Tetromino(playfield)
+GameUI = InGame_UI(DISPLAY, playfield)
+
+GameUI.UpdateNextWindow(nextTetromino.shape)
 tetrominoBag = []
 tetroHold = None
+nextTetromino.RerollShape(tetrominoBag, tetromino.shape)
 
 pygame.display.flip()
 
 def NewTetromino():
-    global tetrominoBag, tetromino, running
+    global tetrominoBag, tetromino, running, nextTetromino, GameUI
     if len(tetrominoBag) >= (len(list(Tetrominoes.keys())) * 2) - 2:
         tetrominoBag = []
 
+    tetrominoBag.append(tetromino.shape)
+    tetromino = nextTetromino
+
     nextTetromino = Tetromino(playfield)
     nextTetromino.RerollShape(tetrominoBag, tetromino.shape)
-    tetrominoBag.append(tetromino.shape)
-    return nextTetromino
+    GameUI.UpdateNextWindow(nextTetromino.shape)
 
 def InGameControls():
     global tetromino, tetroHold, speed
@@ -42,14 +48,14 @@ def InGameControls():
         
         if event.key == pygame.K_ESCAPE:
             pygame.mixer.Sound.play(SoundEffects["Pause"])
-            tetromino = NewTetromino()
+            NewTetromino()
             playfield.ClearStack()
 
         if event.key == pygame.K_SPACE:
             pygame.mixer.Sound.play(SoundEffects["Hold"])
             if tetromino.Hold(tetroHold) == tetromino:
                 tetroHold = tetromino
-                tetromino = NewTetromino()
+                NewTetromino()
                 GameUI.UpdateHoldWindow(tetroHold.shape)
             else:
                 tetromino, tetroHold = tetromino.Hold(tetroHold), tetromino
@@ -66,8 +72,6 @@ def InGameControls():
 
 
 
-#image=pygame.image.load(f"{IMAGE_PATH}GameField-UI_cropped.png")
-#image=pygame.image.load(f"{IMAGE_PATH}GameField-UI_score.png")
 
 if __name__ == "__main__":
     running = True
@@ -75,7 +79,6 @@ if __name__ == "__main__":
         GameUI.UpdateUI()
         timer = pygame.time.get_ticks()
         clock.tick(FPS)
-        #print(clock.get_time())
 
         for event in pygame.event.get():
 
@@ -99,8 +102,7 @@ if __name__ == "__main__":
                 TIME_INTERVAL = 1000
                 playfield.ClearStack()
 
-            tetromino = NewTetromino()
-            #CLOCK = timer
+            NewTetromino()
         
         playfield.DrawStack()
         pygame.display.update()
