@@ -4,21 +4,29 @@ import random
 vector = pygame.math.Vector2
 pygame.mixer.init()
 
+
+#Time variables
+
+RUNNING = True
+PAUSE = False
 FPS = 60
 CLOCK = 0
 TIME_INTERVAL = 1000
 FAST_TIME_INTERVAL = 100
 LOCK_DELAY = 1.5
-DISPLAY_BG = 0
-PLAYFIELD_BG = 0
 
 
-AUDIO_PATH = f"Audio/"
+#Path variables
+
+MUSIC_PATH = f"Audio/Music/"
 SFX_PATH = f"Audio/sfx/"
 IMAGE_PATH = f"images-src/"
+UI_PATH = f"images-src/Game-UI/"
 TILE_PATH = f"images-src/TetrominoBlock/"
 FONT_PATH = "Fonts/yearone.ttf"
 
+
+#Resolution/Size variables
 
 DISPLAY_RES = DISPLAY_W, DISPLAY_H = 650, 700
 
@@ -26,6 +34,9 @@ PLAYFIELD_CELL_SIZE = 30
 PLAYFIELD_COLUMNS, PLAYFIELD_ROWS = 10, 20
 PLAYFIELD_RES = PLAYFIELD_W, PLAYFIELD_H = PLAYFIELD_COLUMNS * PLAYFIELD_CELL_SIZE, PLAYFIELD_ROWS * PLAYFIELD_CELL_SIZE
 SIDE_PANEL_RES = DISPLAY_W - PLAYFIELD_W - 20, DISPLAY_H - PLAYFIELD_H - 20
+
+
+#Tetromino data
 
 DIRECTIONS = {"down":vector(0, 1), "left":vector(-1, 0), "right":vector(1, 0)}
 SPAWN_POS = vector((PLAYFIELD_COLUMNS / 2) - 1, -1)
@@ -57,6 +68,14 @@ WallKickData = {
     }
 }
 
+
+#Sound variables
+
+InGameMusic = {
+    "PlayField":f"{MUSIC_PATH}NotTetris99-Tetris.mp3",
+    "Menu":f"{MUSIC_PATH}NotTetris99-Menu.mp3"
+}
+
 SoundEffects = {
     "Move":pygame.mixer.Sound(f"{SFX_PATH}move.wav"),
     "Rotate":pygame.mixer.Sound(f"{SFX_PATH}rotate.wav"),
@@ -65,6 +84,7 @@ SoundEffects = {
     "Drop":pygame.mixer.Sound(f"{SFX_PATH}drop.wav"),
     "Hold":pygame.mixer.Sound(f"{SFX_PATH}hold.wav"),
     "Pause":pygame.mixer.Sound(f"{SFX_PATH}pause.wav"),
+    "Clear":pygame.mixer.Sound(f"{SFX_PATH}clear.wav"),
 
     "ClearedLines":{
         "Single":pygame.mixer.Sound(f"{SFX_PATH}single.wav"),
@@ -73,16 +93,19 @@ SoundEffects = {
         "Tetris":pygame.mixer.Sound(f"{SFX_PATH}tetris.wav")
     },
 
+    "LvlUp":pygame.mixer.Sound(f"{SFX_PATH}lvlup.wav"),
     "NICE":pygame.mixer.Sound(f"{SFX_PATH}NICE.mp3")
 }
 
-
 for sfx in SoundEffects:
+
     if type(SoundEffects[sfx]) is dict:
         for lineSound in SoundEffects[sfx]:
             SoundEffects[sfx][lineSound].set_volume(0.35)
+
     else:
         SoundEffects[sfx].set_volume(0.5)
 
+SoundEffects["LvlUp"].set_volume(0.3)
 SoundEffects["Pause"].set_volume(0.1)
 SoundEffects["NICE"].set_volume(1.0)

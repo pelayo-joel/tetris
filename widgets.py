@@ -1,5 +1,5 @@
 import time
-from const import *
+import pygame
 from pygame.locals import *
 from pygame import gfxdraw
 
@@ -10,7 +10,7 @@ class Frame(pygame.Surface):
     """Constructor"""
     def __init__(self, parent:pygame.Surface, size:tuple, pos:tuple=(0, 0), color:tuple=(0, 0, 0), surfImage:pygame.image=None):
         pygame.Surface.__init__(self, size)
-        self.set_colorkey((0, 0, 0))
+        self.set_colorkey((1, 1, 1))
         self.width, self.height = size[0], size[1]
         self.pos = (pos[0], pos[1])
         self.color = color
@@ -40,9 +40,11 @@ class Frame(pygame.Surface):
         if image != None:
             self.surfImage = pygame.transform.smoothscale(image, (self.width, self.height))
             self.parent.blit(self.surfImage, drawPos)
+            self.parent.blit(self, drawPos)
         elif self.surfImage != None:
             self.surfImage = pygame.transform.smoothscale(self.surfImage, (self.width, self.height))
             self.parent.blit(self.surfImage, drawPos)
+            self.parent.blit(self, drawPos)
         else:
             self.parent.blit(self, drawPos)
 
@@ -68,10 +70,10 @@ class TextLabel:
             if bgColor != None:
                 self.bg = bgColor
         except AttributeError:
-            self.bg = (0, 0, 0)
+            self.bg = (1, 1, 1)
             
         if self.font == None:
-            self.textFont = pygame.font.Font(FONT_PATH, self.textSize)
+            self.textFont = pygame.font.Font("Arial", self.textSize)
         else:
             self.textFont = pygame.font.Font(self.font, self.textSize)
         

@@ -110,9 +110,11 @@ class PlayField(widgets.GridMap):
         global LOCK_DELAY
         if self.__playfieldLvl * 5 <= self.__clearedLines:
             self.__playfieldLvl += 1
+            pygame.mixer.Sound.play(SoundEffects["LvlUp"])
 
             if self.__playfieldLvl % 10 == 0:
-                LOCK_DELAY -= 0.2
+                LOCK_DELAY -= 0.4
+                LOCK_DELAY = max(0.3, LOCK_DELAY)
 
             return True
     
@@ -421,22 +423,22 @@ class InGame_UI:
         self.pieceImageWidth = 0
         self.pieceImageHeight = 0
 
-        sidePanelImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_cropped(2).png")
-        holdWindowBorderImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_hold(2).png")
-        nextWindowImage = pygame.image.load(f"{IMAGE_PATH}GameField-UI_next.png")
+        sidePanelImage = pygame.image.load(f"{UI_PATH}GameField-UI_cropped(2).png")
+        holdWindowBorderImage = pygame.image.load(f"{UI_PATH}GameField-UI_hold(2).png")
+        nextWindowImage = pygame.image.load(f"{UI_PATH}GameField-UI_next.png")
 
-        self.__sidePanel = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax), pos=(self.playfield.left + self.playfield.gridSurf.get_width(), self.playfield.top - self.playfield.border + 2), surfImage=sidePanelImage)
-        self.__holdWindowBorder = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax / 4), pos=(self.playfield.left - self.panelsWidth, self.playfield.top - self.playfield.border + 2), surfImage=holdWindowBorderImage)
-        self.__scoreSurface = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth - (self.playfield.border * 3), self.panelsHeightMax /2), color=(1, 1, 1))
-        self.__nextWindow = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth, self.panelsHeightMax / 3), surfImage=nextWindowImage)
+        self.__sidePanel = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax), pos=(self.playfield.left + self.playfield.gridSurf.get_width(), self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=sidePanelImage)
+        self.__holdWindowBorder = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax / 4), pos=(self.playfield.left - self.panelsWidth, self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=holdWindowBorderImage)
+        self.__scoreSurface = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth - (self.playfield.border * 3), self.panelsHeightMax /2))
+        self.__nextWindow = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth, self.panelsHeightMax / 3), color=(1, 1, 1), surfImage=nextWindowImage)
         
         self.holdWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
         self.holdWindowEraser.fill((0, 0, 0))
         self.nextWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
         
-        self.holdLabel = widgets.TextLabel(self.__holdWindowBorder.surfImage, "Hold", 17, FONT_PATH, color=(1, 1, 1), pourcentMode=True, posX=33, posY=8)
-        self.sidePanelLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Status", 17, FONT_PATH, color=(1, 1, 1), pourcentMode=True, centerX=True, posY=2)
-        self.nextLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Next", 20, FONT_PATH, color=(1, 1, 1), pourcentMode=True, centerX=True, posY=62)
+        self.holdLabel = widgets.TextLabel(self.__holdWindowBorder.surfImage, "Hold", 17, FONT_PATH, color=(0, 0, 0), pourcentMode=True, posX=33, posY=8)
+        self.sidePanelLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Status", 17, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=2)
+        self.nextLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Next", 20, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=62)
         
         self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=40, posY=8)
         self.scoreLabel = widgets.TextLabel(self.__scoreSurface, f"Score: ", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=38, posY=24)
