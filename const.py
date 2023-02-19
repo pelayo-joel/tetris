@@ -5,10 +5,11 @@ vector = pygame.math.Vector2
 pygame.mixer.init()
 
 
-#Time variables
+#Time/State variables
 
 RUNNING = True
 PAUSE = False
+STATE = "Menu"
 FPS = 60
 CLOCK = 0
 TIME_INTERVAL = 1000
@@ -73,6 +74,9 @@ WallKickData = {
 
 InGameMusic = {
     "PlayField":f"{MUSIC_PATH}NotTetris99-Tetris.mp3",
+    "PlayFieldLvl25":f"{MUSIC_PATH}NotTetris99-Lvl25.mp3",
+    "PlayFieldHELL":f"{MUSIC_PATH}NotTetris99-HELL.mp3",
+    "Results":f"{MUSIC_PATH}NotTetris99-Results.mp3",
     "Menu":f"{MUSIC_PATH}NotTetris99-Menu.mp3"
 }
 
@@ -85,6 +89,10 @@ SoundEffects = {
     "Hold":pygame.mixer.Sound(f"{SFX_PATH}hold.wav"),
     "Pause":pygame.mixer.Sound(f"{SFX_PATH}pause.wav"),
     "Clear":pygame.mixer.Sound(f"{SFX_PATH}clear.wav"),
+    "Select":pygame.mixer.Sound(f"{SFX_PATH}select.wav"),
+    "Confirm":pygame.mixer.Sound(f"{SFX_PATH}confirm.wav"),
+    "Return":pygame.mixer.Sound(f"{SFX_PATH}return.wav"),
+    "Save":pygame.mixer.Sound(f"{SFX_PATH}save.wav"),
 
     "ClearedLines":{
         "Single":pygame.mixer.Sound(f"{SFX_PATH}single.wav"),
@@ -94,6 +102,8 @@ SoundEffects = {
     },
 
     "LvlUp":pygame.mixer.Sound(f"{SFX_PATH}lvlup.wav"),
+    "Lvl25":pygame.mixer.Sound(f"{SFX_PATH}lvl25.wav"),
+    "HELL":pygame.mixer.Sound(f"{SFX_PATH}HELL.wav"),
     "NICE":pygame.mixer.Sound(f"{SFX_PATH}NICE.mp3")
 }
 

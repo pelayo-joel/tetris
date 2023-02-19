@@ -92,6 +92,11 @@ class PlayField(widgets.GridMap):
         self.__playfieldLvl = 1
         self.__currentScore = 0
         self.__clearedLines = 0
+        pygame.mixer.music.stop()
+        pygame.mixer.music.unload()
+        pygame.mixer.music.load(InGameMusic["PlayField"])
+        pygame.mixer.music.set_volume(0.2)
+        pygame.mixer.music.play(-1)
         LOCK_DELAY = 1.5
 
     def GetScoredPoints(self):
@@ -113,8 +118,26 @@ class PlayField(widgets.GridMap):
             pygame.mixer.Sound.play(SoundEffects["LvlUp"])
 
             if self.__playfieldLvl % 10 == 0:
-                LOCK_DELAY -= 0.4
-                LOCK_DELAY = max(0.3, LOCK_DELAY)
+                LOCK_DELAY -= 0.5
+                LOCK_DELAY = max(0.005, LOCK_DELAY)
+
+            if self.__playfieldLvl == 25:
+                pygame.mixer.Sound.play(SoundEffects["Lvl25"])
+                pygame.mixer.music.stop()
+                pygame.mixer.music.unload()
+                pygame.mixer.music.load(InGameMusic["PlayFieldLvl25"])
+                pygame.mixer.music.set_volume(0.2)
+                pygame.mixer.music.play(-1)
+                pygame.time.wait(1)
+
+            if self.__playfieldLvl == 31:
+                pygame.mixer.Sound.play(SoundEffects["HELL"])
+                pygame.mixer.music.stop()
+                pygame.mixer.music.unload()
+                pygame.mixer.music.load(InGameMusic["PlayFieldHELL"])
+                pygame.mixer.music.set_volume(0.2)
+                pygame.mixer.music.play(-1)
+                pygame.time.wait(2)
 
             return True
     
@@ -358,6 +381,8 @@ class Tetromino:
         return self.__touchedGround
 
     def Landed(self, currentTime=0):
+        global CLOCK
+
         if self.__touchedGround:
             if not self.inDelay:
                 pygame.mixer.Sound.play(SoundEffects["GroundTouch"])
@@ -380,6 +405,7 @@ class Tetromino:
                 self.__lockDelay = 1000
                 self.__dropping = False
                 self.inDelay = False
+                CLOCK = pygame.time.get_ticks()
 
             elif not self.__Colliding(touchingGround):
                 self.__touchedGround = False
@@ -423,9 +449,9 @@ class InGame_UI:
         self.pieceImageWidth = 0
         self.pieceImageHeight = 0
 
-        sidePanelImage = pygame.image.load(f"{UI_PATH}GameField-UI_cropped(2).png")
-        holdWindowBorderImage = pygame.image.load(f"{UI_PATH}GameField-UI_hold(2).png")
-        nextWindowImage = pygame.image.load(f"{UI_PATH}GameField-UI_next.png")
+        sidePanelImage = pygame.image.load(f"{UI_PATH}GameField-UI_SidePanel.png")
+        holdWindowBorderImage = pygame.image.load(f"{UI_PATH}GameField-UI_Hold.png")
+        nextWindowImage = pygame.image.load(f"{UI_PATH}GameField-UI_Next.png")
 
         self.__sidePanel = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax), pos=(self.playfield.left + self.playfield.gridSurf.get_width(), self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=sidePanelImage)
         self.__holdWindowBorder = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax / 4), pos=(self.playfield.left - self.panelsWidth, self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=holdWindowBorderImage)

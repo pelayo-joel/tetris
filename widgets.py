@@ -1,5 +1,6 @@
 import time
 import pygame
+from const import *
 from pygame.locals import *
 from pygame import gfxdraw
 
@@ -15,7 +16,7 @@ class Frame(pygame.Surface):
         self.pos = (pos[0], pos[1])
         self.color = color
         self.parent = parent
-        self.surfImage = surfImage
+        self.surfImage, self.activeSurfImage = surfImage, surfImage
         self.fill(self.color)
 
 
@@ -33,13 +34,13 @@ class Frame(pygame.Surface):
         return (self.width, self.height)
 
     #Enables the frame, called every frame in pygame's mainloop and also in other objects
-    def ActiveFrame(self, drawPos:tuple=(), image:pygame.image=None):
+    def ActiveFrame(self, drawPos:tuple=(), activeImage:pygame.image=None):
         if drawPos == ():
             drawPos = self.pos
     
-        if image != None:
-            self.surfImage = pygame.transform.smoothscale(image, (self.width, self.height))
-            self.parent.blit(self.surfImage, drawPos)
+        if activeImage != None:
+            self.activeSurfImage = pygame.transform.smoothscale(activeImage, (self.width, self.height))
+            self.parent.blit(self.activeSurfImage, drawPos)
             self.parent.blit(self, drawPos)
         elif self.surfImage != None:
             self.surfImage = pygame.transform.smoothscale(self.surfImage, (self.width, self.height))
@@ -136,6 +137,8 @@ class TextLabel:
         
 
 
+
+
 """A 'Button' class, as its name implies it creates buttons :D"""
 class Button:
     """Constructor"""
@@ -199,19 +202,36 @@ class Button:
         if isinstance(label, str) and "/" not in label:
             font = pygame.font.Font(FONT_PATH, 30)
             myText = font.render(label, True, color)
-            self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
+            if self.isImage:
+                buttonTextLab = TextLabel(self.buttonFormat, label, 20, FONT_PATH, centerX=True, centerY=True)
+            else:
+                self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:
             img = pygame.image.load(label).convert_alpha()
             img = pygame.transform.smoothscale(img, (self.width/2, self.height/2))
             self.frame.blit(img, img.get_rect(center=self.buttonFormat.center))
 
+    def __Hover(self):
+        mouse_pos = pygame.mouse.get_pos()
+        mousePosToFrame = (mouse_pos[0]-self.frame.get_SurfPos()[0], mouse_pos[1]-self.frame.get_SurfPos()[1])
+        if self.isImage:
+            imgPos = self.buttonFormat.get_rect().move(self.left, self.top)
+            if imgPos.collidepoint(mousePosToFrame):
+                self.Click()
+        elif self.isImage == False and self.buttonFormat.collidepoint(mousePosToFrame):
+            hover = (self.__Cap(self.fill[0]*1.2, 0, 255), self.__Cap(self.fill[1]*1.2, 0, 255), self.__Cap(self.fill[2]*1.2, 0, 255))
+            self.buttonFormat = pygame.draw.rect(self.frame, hover, pygame.Rect(self.left, self.top, self.width, self.height), border_radius=self.borderRad)
+            pygame.display.update()
+            self.__DrawLabel(self.label)
+            self.Click() 
+        elif self.isImage == False:
+            self.buttonFormat = pygame.draw.rect(self.frame, self.fill, pygame.Rect(self.left, self.top, self.width, self.height), border_radius=self.borderRad)
+            self.__DrawLabel(self.label)
+            pygame.display.update()
+
     #Caps the value passed in by 'min' and 'max'
-    def __Cap(self, value, min:int, max:int):
-        if value > max:
-            value = max
-        elif value < min:
-            value = min
-        return value
+    def __Cap(self, value, mini:int, maxi:int):    
+        return max(min(maxi, value), mini)
 
 
     """Public methods"""
@@ -236,7 +256,8 @@ class Button:
     #Enables the button, called every frame in pygame's mainloop
     def ActiveButton(self, buttonClicked=None):
         self.activeLab = buttonClicked
-        mouse_pos = pygame.mouse.get_pos()
+        self.__Hover()
+        """mouse_pos = pygame.mouse.get_pos()
         mousePosToFrame = (mouse_pos[0]-self.frame.get_SurfPos()[0], mouse_pos[1]-self.frame.get_SurfPos()[1])
         if self.isImage:
             imgPos = self.buttonFormat.get_rect().move(self.left, self.top)
@@ -251,7 +272,7 @@ class Button:
         elif self.isImage == False:
             self.buttonFormat = pygame.draw.rect(self.frame, self.fill, pygame.Rect(self.left, self.top, self.width, self.height), border_radius=self.borderRad)
             self.__DrawLabel(self.label)
-            pygame.display.update()
+            pygame.display.update()"""
 
     #Changes the image
     def ImgChange(self, newImage:str):
@@ -412,6 +433,7 @@ class GfxButton:
      borderR:int=0, type:str="Bool", buttonLabel:str="Button", imageButton:str=None, func=None):
 
         self.frame = parent
+        self.buttonFrame = None
         self.parentMidX, self.parentMidY = parent.get_rect().centerx, parent.get_rect().centery
         self.centerX, self.centerY, self.pourcentMode, self.posX, self.posY = centerX, centerY, pourcentMode, posX, posY
         self.width, self.height = width, height
@@ -428,7 +450,7 @@ class GfxButton:
         if imageButton != None:
             self.buttonFormat = pygame.image.load(imageButton).convert_alpha()
             self.buttonFormat = pygame.transform.smoothscale(self.buttonFormat, (self.width, self.height))
-            self.frame.blit(self.buttonFormat, (self.left, self.top))
+            self.buttonFrame = Frame(self.frame, (self.width, self.height), (self.left, self.top), color=(1, 1, 1), surfImage=self.buttonFormat)
             self.isImage = True
         elif imageButton == None:
             if borderR != 0:
@@ -480,51 +502,28 @@ class GfxButton:
             self.top = self.posY
 
     #Sets up the label on the button wether if it's an image or a text
-    def __DrawLabel(self, label, color=(0, 0, 0)):
+    def __DrawLabel(self, label, color=(0, 0, 0), surf=None):
         if isinstance(label, str) and "/" not in label:
             font = pygame.font.Font(FONT_PATH, 30)
             myText = font.render(self.label, True, color)
-            self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
+            if self.isImage:
+                if surf != None:
+                    TextLabel(surf, label, 20, FONT_PATH, centerX=True, centerY=True)
+                else:
+                    TextLabel(self.buttonFrame.surfImage, label, 20, FONT_PATH, centerX=True, centerY=True)
+            else:
+                self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:
             img = pygame.image.load(label).convert_alpha()
             img = pygame.transform.smoothscale(img, (self.width/2, self.height/2))
             self.frame.blit(img, img.get_rect(center=self.buttonFormat.center))
 
-    #Caps the value passed in by 'min' and 'max'
-    def __Cap(self, value, min:int, max:int):
-        if value > max:
-            value = max
-        elif value < min:
-            value = min
-        return value
-
-
-    """Public methods"""
-
-    #Detects if the object has been clicked, different behaviour depending on its type
-    def Click(self):
-        if pygame.mouse.get_pressed()[0] and self.buttonType == "Bool":
-            if self.state == False:
-                self.label = self.activeLab
-                self.state = True
-            else:
-                self.label = self.unactiveLab
-                self.state = False
-            self.__DrawLabel(self.label)
-            pygame.display.update()
-            self.command()
-            time.sleep(0.07)
-        if pygame.mouse.get_pressed()[0] and self.buttonType == "OnClick":
-            self.command()
-            time.sleep(0.5)
-
-    #Enables the button, called every frame in pygame's mainloop
-    def ActiveButton(self, buttonClicked=None):
-        self.activeLab = buttonClicked
+    def __Hover(self):
         mouse_pos = pygame.mouse.get_pos()
         mousePosToFrame = (mouse_pos[0]-self.frame.get_SurfPos()[0], mouse_pos[1]-self.frame.get_SurfPos()[1])
         if self.isImage:
-            imgPos = self.buttonFormat.get_rect().move(self.left, self.top)
+            imgPos = self.buttonFrame.get_rect()
+            self.__DrawLabel(self.label)
             if imgPos.collidepoint(mousePosToFrame):
                 self.Click()
         elif self.isImage == False and self.buttonFormat.collidepoint(mousePosToFrame):
@@ -537,6 +536,42 @@ class GfxButton:
             self.buttonFormat = pygame.draw.rect(self.frame, self.fill, pygame.Rect(self.left, self.top, self.width, self.height), border_radius=self.borderRad)
             self.__DrawLabel(self.label)
             pygame.display.update()
+
+    #Caps the value passed in by 'min' and 'max'
+    def __Cap(self, value, mini:int, maxi:int):
+        return max(min(maxi, value), mini)
+
+
+    """Public methods"""
+
+    #Detects if the object has been clicked, different behaviour depending on its type
+    def Click(self, input:bool=False):
+        if (pygame.mouse.get_pressed()[0] and self.buttonType == "Bool") or (input and self.buttonType == "Bool"):
+            if self.state == False:
+                self.label = self.activeLab
+                self.state = True
+            else:
+                self.label = self.unactiveLab
+                self.state = False
+            self.__DrawLabel(self.label)
+            pygame.display.update()
+            self.command()
+            input = False
+            time.sleep(0.07)
+        if (pygame.mouse.get_pressed()[0] and self.buttonType == "OnClick") or (input and self.buttonType == "OnClick"):
+            self.command()
+            input = False
+            #time.sleep(0.5)
+
+    #Enables the button, called every frame in pygame's mainloop
+    def ActiveButton(self, focused:bool=False, focusedImage:pygame.image=None, buttonClicked:str=None):
+        self.activeLab = buttonClicked
+        if focused:
+            self.buttonFrame.ActiveFrame(activeImage=focusedImage)
+            self.__DrawLabel(self.label, surf=self.buttonFrame.activeSurfImage)
+        else:
+            self.buttonFrame.ActiveFrame()
+            self.__Hover()
 
     #Changes the image
     def ImgChange(self, newImage:str):

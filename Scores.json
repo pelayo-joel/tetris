@@ -1,0 +1,40 @@
+{
+    "Guest":{
+        "Classic":{
+            "Score":0,
+            "Level":0,
+            "Time":0,
+            "Lines Cleared":0
+        },
+        "Marathon":{
+            "Score":0,
+            "Level":0,
+            "Lines Cleared":0
+        },
+        "Survival":{
+            "Score":0,
+            "Level":0,
+            "Time":0,
+            "Lines Cleared":0
+        }
+    },
+    "Burger":{
+        "Classic":{
+            "Score":0,
+            "Level":0,
+            "Time":0,
+            "Lines Cleared":0
+        },
+        "Marathon":{
+            "Score":0,
+            "Level":0,
+            "Lines Cleared":0
+        },
+        "Survival":{
+            "Score":0,
+            "Level":0,
+            "Time":0,
+            "Lines Cleared":0
+        }
+    }
+}
