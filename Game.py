@@ -18,9 +18,6 @@ GAME_SCENE = Frame(DISPLAY, (DISPLAY_W, DISPLAY_H), color=(1, 1, 1), surfImage=g
 MENU_SCENE = Frame(DISPLAY, (DISPLAY_W, DISPLAY_H), color=(1, 1, 1), surfImage=menuBg)
 
 
-
-#Game = Tetris.Game(GAME_SCENE, 'training')
-#Menu = Tetris.Menu(MENU_SCENE)
 clock = pygame.time.Clock()
 speed = TIME_INTERVAL
 
@@ -32,7 +29,7 @@ if __name__ == "__main__":
     while RUNNING:
 
         if STATE == "Game":
-            Game = Tetris.Game(GAME_SCENE, 'training')
+            Game = Tetris.Game(GAME_SCENE, GAMEMODE)
 
             while STATE == "Game":
                 Game.GameLoop()
@@ -44,5 +41,5 @@ if __name__ == "__main__":
 
             while STATE == "Menu":
                 Menu.MenuLoop()
-                RUNNING, STATE = Menu.GetStates()
+                RUNNING, STATE, GAMEMODE = Menu.GetStates()
             

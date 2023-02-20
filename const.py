@@ -10,6 +10,7 @@ pygame.mixer.init()
 RUNNING = True
 PAUSE = False
 STATE = "Menu"
+GAMEMODE = "Training"
 FPS = 60
 CLOCK = 0
 TIME_INTERVAL = 1000
@@ -93,6 +94,7 @@ SoundEffects = {
     "Confirm":pygame.mixer.Sound(f"{SFX_PATH}confirm.wav"),
     "Return":pygame.mixer.Sound(f"{SFX_PATH}return.wav"),
     "Save":pygame.mixer.Sound(f"{SFX_PATH}save.wav"),
+    "GameOver":pygame.mixer.Sound(f"{SFX_PATH}gameover.wav"),
 
     "ClearedLines":{
         "Single":pygame.mixer.Sound(f"{SFX_PATH}single.wav"),

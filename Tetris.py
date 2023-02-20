@@ -3,17 +3,21 @@ from tetrisObj import *
 
 class Game:
     def __init__(self, scene:pygame.Surface, mode:str):
-        global CLOCK
+        global CLOCK, TIME_INTERVAL
         self.scene = scene
-        self.mode = mode
+        self.__mode = mode
 
-        self.playfield = PlayField(self.scene, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 173, 50, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS, border=True, borderWidth=9, borderColor=(95, 250, 195))
+        self.playfield = PlayField(self.scene, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 173, 50, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS, mode=self.__mode, border=True, borderWidth=9, borderColor=(95, 250, 195))
         self.tetromino = Tetromino(self.playfield)
         self.nextTetromino = Tetromino(self.playfield)
         self.GameUI = InGame_UI(self.scene, self.playfield)
 
         self.clock = pygame.time.Clock()
         CLOCK = pygame.time.get_ticks()
+
+        self.sec = 0
+        self.minutes = int(self.sec / 60)
+        self.hour = int(self.minutes / 60)
         self.speed = TIME_INTERVAL
 
         self.GameUI.UpdateNextWindow(self.nextTetromino.shape)
@@ -24,9 +28,19 @@ class Game:
         pygame.display.flip()
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
-        pygame.mixer.music.load(InGameMusic["PlayField"])
-        pygame.mixer.music.set_volume(0.2)
+
+        if self.__mode == "Marathon":
+            TIME_INTERVAL -= 675
+            pygame.mixer.music.load(InGameMusic["PlayFieldLvl25"])
+            pygame.mixer.music.set_volume(0.3)
+        else:
+            pygame.mixer.music.load(InGameMusic["PlayField"])
+            pygame.mixer.music.set_volume(0.2)
+
         pygame.mixer.music.play(-1)
+
+    def __StartupCountdown(self):
+        return None
 
     def __NewTetromino(self):
 
@@ -41,10 +55,15 @@ class Game:
         self.GameUI.UpdateNextWindow(self.nextTetromino.shape)
 
     def __GamePause(self):
-        global PAUSE, CLOCK
+        global PAUSE, CLOCK, RUNNING, STATE
         
         while PAUSE:
             for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    RUNNING = False
+                    STATE = None
+                    PAUSE = False
 
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -53,6 +72,21 @@ class Game:
                         pygame.mixer.Sound.play(SoundEffects["Pause"])
                         CLOCK = pygame.time.get_ticks()
                         PAUSE = False
+
+    def __GameOver(self):
+        gameOver = True
+        pygame.mixer.Sound.play(SoundEffects["GameOver"])
+        pygame.mixer.music.stop()
+        pygame.mixer.music.unload()
+        pygame.time.wait(6000)
+
+        pygame.mixer.Sound.play(SoundEffects["Save"])
+        pygame.mixer.music.load(InGameMusic["Results"])
+        pygame.mixer.music.set_volume(0.3)
+        pygame.mixer.music.play(-1)
+
+        while gameOver:
+            continue
 
     def __InGameControls(self, event):
         global PAUSE
@@ -79,12 +113,12 @@ class Game:
                     self.GameUI.UpdateHoldWindow(self.tetroHold.shape)
                     pygame.mixer.Sound.play(SoundEffects["Hold"])
 
-            if event.key == pygame.K_ESCAPE:
+            if event.key == pygame.K_ESCAPE and self.__mode == "Training":
                 PAUSE = True
                 pygame.mixer.music.pause()
                 pygame.mixer.Sound.play(SoundEffects["Pause"])
 
-            if event.key == pygame.K_BACKSPACE:
+            if event.key == pygame.K_BACKSPACE and self.__mode == "Training":
                 self.__NewTetromino()
                 self.GameUI.UpdateHoldWindow()
                 self.tetroHold = None
@@ -99,12 +133,11 @@ class Game:
             self.speed = TIME_INTERVAL
 
 
-
     def GameLoop(self):
         global CLOCK, RUNNING, TIME_INTERVAL, STATE
-        self.GameUI.UpdateUI()
         timer = pygame.time.get_ticks()
         self.clock.tick(FPS)
+        self.GameUI.UpdateUI()
 
         for event in pygame.event.get():
 
@@ -138,17 +171,25 @@ class Game:
 
             if self.playfield.CheckLoss():
                 TIME_INTERVAL = 1000
-                self.GameUI.UpdateHoldWindow()
                 self.tetroHold = None
 
-            self.GameUI.UpdateStatusWindow()
+                if self.__mode == "Training":
+                    self.GameUI.UpdateHoldWindow()
+                else:
+                    self.tetromino.TetroKill()
+                    self.__GameOver()
+
             self.__NewTetromino()
+
+        elif self.__mode == "Marathon" and self.playfield.sec == 61:
+            self.tetromino.TetroKill()
+            self.__GameOver()
         
-
+        self.GameUI.UpdateStatusWindow()
         self.playfield.DrawStack()
-
         self.scene.ActiveFrame()
         pygame.display.update()
+
 
     def GetStates(self):
         return RUNNING, STATE
@@ -171,10 +212,10 @@ class Menu:
         self.mainMenuScore = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=70, type="OnClick", buttonLabel="Score Board", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Score Board"))
         self.mainMenuCredits = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=85, type="OnClick", buttonLabel="Credits", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Credits"))
 
-        self.gameMenuTraining = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=30, type="OnClick", buttonLabel="Training", imageButton=f"{UI_PATH}Button2.png", func=self.__ChangeGameState)
-        self.gameMenuClassic = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=45, type="OnClick", buttonLabel="Classic", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState)
-        self.gameMenuMarathon = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=60, type="OnClick", buttonLabel="Marathon", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Score Board"))
-        self.gameMenuSurvival = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=75, type="OnClick", buttonLabel="Survival", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Credits"))
+        self.gameMenuTraining = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=25, type="OnClick", buttonLabel="Training", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState("Training"))
+        self.gameMenuClassic = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=40, type="OnClick", buttonLabel="Classic", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState("Classic"))
+        self.gameMenuMarathon = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=55, type="OnClick", buttonLabel="Marathon", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState("Marathon"))
+        self.gameMenuSurvival = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=70, type="OnClick", buttonLabel="Survival", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState("Survival"))
 
 
         self.menuState = "Main Menu"
@@ -194,9 +235,11 @@ class Menu:
     def __ChangeMenuState(self, nextState:str):
         self.menuState = nextState
         self.arrowSelector = 0
+        self.scene.parent.blit(self.scene.surfImage, (0, 0))
 
-    def __ChangeGameState(self):
-        global STATE
+    def __ChangeGameState(self, gameMode:str):
+        global STATE, GAMEMODE
+        GAMEMODE = gameMode
         STATE = "Game"
 
     def __MenuControls(self):
@@ -232,10 +275,10 @@ class Menu:
         self.currentMenu = self.mainMenuArrowNav
         self.__MenuControls()
 
-        for mainMenuButton in self.mainMenuArrowNav:
+        for mainMenuButton in self.currentMenu:
             mainMenuButton.ActiveButton()
 
-        self.mainMenuArrowNav[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
+        self.currentMenu[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
 
     def __ScoreMenu(self):
         self.__MenuControls()
@@ -247,10 +290,10 @@ class Menu:
         self.currentMenu = self.gameMenuArrowNav
         self.__MenuControls()
 
-        for gameMenuButton in self.gameMenuArrowNav:
+        for gameMenuButton in self.currentMenu:
             gameMenuButton.ActiveButton()
 
-        self.gameMenuArrowNav[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
+        self.currentMenu[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
 
     def MenuLoop(self):
         self.scene.ActiveFrame()
@@ -265,4 +308,4 @@ class Menu:
         pygame.display.update()
 
     def GetStates(self):
-        return RUNNING, STATE
+        return RUNNING, STATE, GAMEMODE

@@ -3,8 +3,9 @@ from const import *
 
 
 class PlayField(widgets.GridMap):
-    def __init__(self, *args, border:bool=False, borderWidth:int=0, borderColor:tuple=(255, 255, 255), **kwargs):
+    def __init__(self, *args, mode:str, border:bool=False, borderWidth:int=0, borderColor:tuple=(255, 255, 255), **kwargs):
         super().__init__(*args, **kwargs)
+        global LOCK_DELAY
         
         self.border = borderWidth
         offset = borderWidth - 2
@@ -16,14 +17,45 @@ class PlayField(widgets.GridMap):
         self.__stackGroup = pygame.sprite.Group()
         self.stack = [[None] * self.nColumns for i in range(self.nRows)]
 
+        self.start = pygame.time.get_ticks()
+        self.__mode = mode
+
+        self.sec = 0
         self.__score = {"Single":100, "Double":300, "Triple":700, "Tetris":1200}
         self.__currentScore = 0
         self.__clearedLines = 0
         self.__getScoredPoints = 0
-        self.__playfieldLvl = 1
+
+        if self.__mode == "Marathon":
+            self.__playfieldLvl = 25
+            self.__clearedLines = 120
+            LOCK_DELAY = 0.5
+        else:
+            self.__playfieldLvl = 1
 
         self.multiplierTSpin = 1.0
     
+    def DisplayClock(self):
+        self.sec = int((pygame.time.get_ticks() - self.start) / 1000)
+        hour, minutes = 0, 0
+        clockDisplay = f"{hour}:{minutes}:{self.sec}"
+
+        if self.sec == 60:
+            self.start = pygame.time.get_ticks()
+            minutes += 1
+        if minutes == 60:
+            minutes = 0
+            hour += 1
+        if hour == 24:
+            hour = 0
+
+        return clockDisplay
+    
+    def TimerClock(self):
+        self.sec = int((pygame.time.get_ticks() - self.start) / 1000)
+        timerDisplay = f"0:{60 - self.sec}"
+
+        return timerDisplay
 
     def FillCell(self, landedTile):
         self.__stackGroup.add(landedTile)
@@ -32,6 +64,9 @@ class PlayField(widgets.GridMap):
 
     def DrawStack(self):
         self.__stackGroup.draw(self.gridSurf)
+
+    def AddStack(self):
+        return None
 
     def ClearStack(self):
         self.__stackGroup.empty()
@@ -101,6 +136,9 @@ class PlayField(widgets.GridMap):
 
     def GetScoredPoints(self):
         return None
+    
+    def GetPlayfieldMode(self):
+        return self.__mode
 
     def GetFullScore(self):
         return self.__currentScore
@@ -434,6 +472,10 @@ class Tetromino:
                     
                 
             return holdedTetro
+        
+    def TetroKill(self):
+        for tile in self.__tiles:
+            tile.kill()
 
 
 
@@ -465,13 +507,14 @@ class InGame_UI:
         self.holdLabel = widgets.TextLabel(self.__holdWindowBorder.surfImage, "Hold", 17, FONT_PATH, color=(0, 0, 0), pourcentMode=True, posX=33, posY=8)
         self.sidePanelLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Status", 17, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=2)
         self.nextLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Next", 20, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=62)
+        self.modeLabel = widgets.TextLabel(self.__sidePanel.surfImage, f"{self.playfield.GetPlayfieldMode()}", 18, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=95)
         
         self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=40, posY=8)
         self.scoreLabel = widgets.TextLabel(self.__scoreSurface, f"Score: ", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=38, posY=24)
         self.score = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetFullScore()}", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=32)
         self.nLinesClearedLab = widgets.TextLabel(self.__scoreSurface, f"Cleared:", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=31, posY=56)
         self.nLinesCleared = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=64)
-
+        self.time = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.DisplayClock()}", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=96)
 
 
     def UpdateUI(self):
@@ -506,3 +549,15 @@ class InGame_UI:
         self.score.NewText(f"{self.playfield.GetFullScore()}")
         self.lvlLabel.NewText(f"Lvl: {self.playfield.GetPlayfieldLvl()}")
         self.nLinesCleared.NewText(f"{self.playfield.GetClearedLines()}")
+        
+        if self.playfield.GetPlayfieldMode() == "Marathon":
+            self.time.NewText(f"{self.playfield.TimerClock()}")
+            self.nLinesCleared.NewText(f"{self.playfield.GetClearedLines() - 120}")
+        else:
+            self.time.NewText(f"{self.playfield.DisplayClock()}")
+
+    def PauseScreen(self):
+        return None
+
+    def GameOverScreen(self, mode:str):
+        return None
