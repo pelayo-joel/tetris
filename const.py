@@ -10,6 +10,7 @@ pygame.mixer.init()
 RUNNING = True
 PAUSE = False
 STATE = "Menu"
+MENUSTATE = "Main Menu"
 GAMEMODE = "Training"
 FPS = 60
 CLOCK = 0
@@ -82,6 +83,9 @@ InGameMusic = {
 }
 
 SoundEffects = {
+    "Go":pygame.mixer.Sound(f"{SFX_PATH}go.wav"),
+    "Ready":pygame.mixer.Sound(f"{SFX_PATH}ready.wav"),
+    "Count":pygame.mixer.Sound(f"{SFX_PATH}count.wav"),
     "Move":pygame.mixer.Sound(f"{SFX_PATH}move.wav"),
     "Rotate":pygame.mixer.Sound(f"{SFX_PATH}rotate.wav"),
     "GroundTouch":pygame.mixer.Sound(f"{SFX_PATH}onground.wav"),
@@ -119,5 +123,5 @@ for sfx in SoundEffects:
         SoundEffects[sfx].set_volume(0.5)
 
 SoundEffects["LvlUp"].set_volume(0.3)
-SoundEffects["Pause"].set_volume(0.1)
+SoundEffects["Pause"].set_volume(0.25)
 SoundEffects["NICE"].set_volume(1.0)

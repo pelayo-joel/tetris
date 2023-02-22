@@ -444,7 +444,7 @@ class GfxButton:
         self.buttonType = type
         self.state = False
         self.label, self.activeLab, self.unactiveLab = buttonLabel, buttonLabel, buttonLabel
-        self.command = func
+        self.__command = func
         self.buttonFormat = None
 
         if imageButton != None:
@@ -510,7 +510,7 @@ class GfxButton:
                 if surf != None:
                     TextLabel(surf, label, 20, FONT_PATH, centerX=True, centerY=True)
                 else:
-                    TextLabel(self.buttonFrame.surfImage, label, 20, FONT_PATH, centerX=True, centerY=True)
+                    TextLabel(self.buttonFrame, label, 20, FONT_PATH, centerX=True, centerY=True)
             else:
                 self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:
@@ -555,11 +555,11 @@ class GfxButton:
                 self.state = False
             self.__DrawLabel(self.label)
             pygame.display.update()
-            self.command()
+            self.__command()
             input = False
             time.sleep(0.07)
         if (pygame.mouse.get_pressed()[0] and self.buttonType == "OnClick") or (input and self.buttonType == "OnClick"):
-            self.command()
+            self.__command()
             input = False
             #time.sleep(0.5)
 
@@ -572,6 +572,9 @@ class GfxButton:
         else:
             self.buttonFrame.ActiveFrame()
             self.__Hover()
+
+    def Command(self, func):
+        self.__command = func
 
     #Changes the image
     def ImgChange(self, newImage:str):

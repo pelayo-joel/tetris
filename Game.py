@@ -33,11 +33,17 @@ if __name__ == "__main__":
 
             while STATE == "Game":
                 Game.GameLoop()
-                RUNNING, STATE = Game.GetStates()
+                RUNNING, STATE, MENUSTATE = Game.GetStates()
+                
+                if Game.Restart():
+                    break
 
+            GAME_SCENE.blit(GAME_SCENE.surfImage, (0, 0))
+            GAME_SCENE.ActiveFrame()
+            pygame.display.update()
 
         elif STATE == "Menu":
-            Menu = Tetris.Menu(MENU_SCENE)
+            Menu = Tetris.Menu(MENU_SCENE, MENUSTATE)
 
             while STATE == "Menu":
                 Menu.MenuLoop()

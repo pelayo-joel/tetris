@@ -6,6 +6,7 @@ class Game:
         global CLOCK, TIME_INTERVAL
         self.scene = scene
         self.__mode = mode
+        self.__restart = False
 
         self.playfield = PlayField(self.scene, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 173, 50, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS, mode=self.__mode, border=True, borderWidth=9, borderColor=(95, 250, 195))
         self.tetromino = Tetromino(self.playfield)
@@ -16,8 +17,6 @@ class Game:
         CLOCK = pygame.time.get_ticks()
 
         self.sec = 0
-        self.minutes = int(self.sec / 60)
-        self.hour = int(self.minutes / 60)
         self.speed = TIME_INTERVAL
 
         self.GameUI.UpdateNextWindow(self.nextTetromino.shape)
@@ -29,6 +28,12 @@ class Game:
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
 
+
+        if self.__mode != "Training":
+            self.GameUI.UpdateUI()
+            self.__StartupCountdown()
+            CLOCK = pygame.time.get_ticks()
+
         if self.__mode == "Marathon":
             TIME_INTERVAL -= 675
             pygame.mixer.music.load(InGameMusic["PlayFieldLvl25"])
@@ -39,8 +44,52 @@ class Game:
 
         pygame.mixer.music.play(-1)
 
+    def __ChangeGameState(self):
+        global STATE, MENUSTATE, PAUSE
+        PAUSE, STATE, MENUSTATE = False, "Menu", "Game Modes"
+
     def __StartupCountdown(self):
-        return None
+        start = pygame.time.get_ticks()
+        startTimer = 0
+        pygame.mixer.Sound.play(SoundEffects["Ready"])
+
+        while pygame.time.get_ticks() < start + 5000:
+            startTimer = pygame.time.get_ticks() - start
+
+            if pygame.time.get_ticks() >= start + 4000:
+                pygame.mixer.Sound.play(SoundEffects["Go"])
+            else:
+                pygame.mixer.Sound.play(SoundEffects["Count"])
+
+
+            self.playfield.GridUpdate()
+            countdownImage, sceneCenter = self.GameUI.Countdown()
+            self.scene.blit(countdownImage, sceneCenter)
+            self.GameUI.UpdateUI()
+            self.scene.parent.blit(self.scene.surfImage, (0, 0))
+            self.scene.ActiveFrame()
+            pygame.display.update()
+            pygame.time.wait(1000)
+
+        self.playfield.start += startTimer
+
+    def __Clear(self):
+        global PAUSE, CLOCK
+        self.__NewTetromino()
+        self.GameUI.UpdateHoldWindow()
+        self.tetroHold = None
+        self.playfield.ClearStatus()
+        self.playfield.ClearStack()
+        self.GameUI.UpdateStatusWindow()
+        #self.playfield.start += pauseTimer
+        CLOCK = pygame.time.get_ticks()
+        PAUSE = False
+        pygame.mixer.Sound.play(SoundEffects["Clear"])
+
+    def __WillRestart(self):
+        self.__restart = True
+        self.playfield.ClearStatus()
+        self.playfield.ClearStack()
 
     def __NewTetromino(self):
 
@@ -56,8 +105,14 @@ class Game:
 
     def __GamePause(self):
         global PAUSE, CLOCK, RUNNING, STATE
-        
+        pauseStart = pygame.time.get_ticks()
+
+
         while PAUSE:
+            self.GameUI.pauseArrowNav[0].Command(self.__ChangeGameState)
+            self.GameUI.pauseArrowNav[1].Command(self.__Clear)
+
+            pauseTimer = int(pygame.time.get_ticks() - pauseStart)
             for event in pygame.event.get():
 
                 if event.type == pygame.QUIT:
@@ -70,15 +125,36 @@ class Game:
 
                         pygame.mixer.music.unpause()
                         pygame.mixer.Sound.play(SoundEffects["Pause"])
+                        self.playfield.start += pauseTimer
                         CLOCK = pygame.time.get_ticks()
                         PAUSE = False
 
+                    if event.key == pygame.K_UP:
+                        self.GameUI.pauseSelector -= 1
+                        self.GameUI.pauseSelector = (self.GameUI.pauseSelector % len(self.GameUI.pauseArrowNav))
+                        pygame.mixer.Sound.play(SoundEffects["Select"])
+
+                    if event.key == pygame.K_DOWN:
+                        self.GameUI.pauseSelector += 1
+                        self.GameUI.pauseSelector = (self.GameUI.pauseSelector % len(self.GameUI.pauseArrowNav))
+                        pygame.mixer.Sound.play(SoundEffects["Select"])
+
+                    if event.key == pygame.K_RETURN:
+                        self.GameUI.pauseArrowNav[self.GameUI.pauseSelector].Click(input=True)
+                        pygame.mixer.Sound.play(SoundEffects["Confirm"])
+            
+            self.GameUI.PauseScreen()
+            self.scene.ActiveFrame()
+            pygame.display.update()
+
     def __GameOver(self):
+        global RUNNING, STATE
         gameOver = True
+        timeSpent = self.playfield.DisplayClock()
         pygame.mixer.Sound.play(SoundEffects["GameOver"])
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
-        pygame.time.wait(6000)
+        pygame.time.wait(5000)
 
         pygame.mixer.Sound.play(SoundEffects["Save"])
         pygame.mixer.music.load(InGameMusic["Results"])
@@ -86,7 +162,36 @@ class Game:
         pygame.mixer.music.play(-1)
 
         while gameOver:
-            continue
+            self.GameUI.gameOverArrowNav[0].Command(self.__ChangeGameState)
+            self.GameUI.gameOverArrowNav[1].Command(self.__WillRestart)
+
+            for event in pygame.event.get():
+
+                if event.type == pygame.QUIT:
+                    RUNNING = False
+                    STATE = None
+                    gameOver = False
+
+                if event.type == pygame.KEYDOWN:
+
+                    if event.key == pygame.K_LEFT:
+                        self.GameUI.gameOverSelector -= 1
+                        self.GameUI.gameOverSelector = (self.GameUI.gameOverSelector % len(self.GameUI.gameOverArrowNav))
+                        pygame.mixer.Sound.play(SoundEffects["Select"])
+
+                    if event.key == pygame.K_RIGHT:
+                        self.GameUI.gameOverSelector += 1
+                        self.GameUI.gameOverSelector = (self.GameUI.gameOverSelector % len(self.GameUI.gameOverArrowNav))
+                        pygame.mixer.Sound.play(SoundEffects["Select"])
+
+                    if event.key == pygame.K_RETURN:
+                        gameOver = False
+                        self.GameUI.gameOverArrowNav[self.GameUI.gameOverSelector].Click(input=True)
+                        pygame.mixer.Sound.play(SoundEffects["Confirm"])
+
+            self.GameUI.GameOverScreen(self.__mode, timeSpent)
+            self.scene.ActiveFrame()
+            pygame.display.update()
 
     def __InGameControls(self, event):
         global PAUSE
@@ -119,13 +224,7 @@ class Game:
                 pygame.mixer.Sound.play(SoundEffects["Pause"])
 
             if event.key == pygame.K_BACKSPACE and self.__mode == "Training":
-                self.__NewTetromino()
-                self.GameUI.UpdateHoldWindow()
-                self.tetroHold = None
-                self.playfield.ClearStatus()
-                self.playfield.ClearStack()
-                self.GameUI.UpdateStatusWindow()
-                pygame.mixer.Sound.play(SoundEffects["Clear"])
+                self.__Clear()
 
         if keys[pygame.K_DOWN] and not self.tetromino.get_TouchedGround():
             self.speed = FAST_TIME_INTERVAL
@@ -148,7 +247,6 @@ class Game:
             self.__InGameControls(event)
         
         self.__GamePause()
-
 
         if timer > CLOCK and not self.tetromino.get_TouchedGround():
             self.tetromino.TetrominoFall()
@@ -177,12 +275,14 @@ class Game:
                     self.GameUI.UpdateHoldWindow()
                 else:
                     self.tetromino.TetroKill()
+                    self.playfield.DrawStack()
                     self.__GameOver()
 
             self.__NewTetromino()
 
         elif self.__mode == "Marathon" and self.playfield.sec == 61:
             self.tetromino.TetroKill()
+            self.playfield.DrawStack()
             self.__GameOver()
         
         self.GameUI.UpdateStatusWindow()
@@ -190,16 +290,18 @@ class Game:
         self.scene.ActiveFrame()
         pygame.display.update()
 
+    def Restart(self):
+        return self.__restart
 
     def GetStates(self):
-        return RUNNING, STATE
+        return RUNNING, STATE, MENUSTATE
 
 
 
 
 
 class Menu:
-    def __init__(self, scene:pygame.Surface):
+    def __init__(self, scene:pygame.Surface, state:str):
         self.scene = scene
 
         self.mainLogo = pygame.image.load(f"{IMAGE_PATH}Tetris69-Logo.png")
@@ -218,7 +320,7 @@ class Menu:
         self.gameMenuSurvival = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=70, type="OnClick", buttonLabel="Survival", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeGameState("Survival"))
 
 
-        self.menuState = "Main Menu"
+        self.menuState = state
         self.mainMenuArrowNav = [self.mainMenuGame, self.mainMenuScore, self.mainMenuCredits]
         self.gameMenuArrowNav = [self.gameMenuTraining, self.gameMenuClassic, self.gameMenuMarathon, self.gameMenuSurvival]
         self.currentMenu = []
@@ -236,6 +338,8 @@ class Menu:
         self.menuState = nextState
         self.arrowSelector = 0
         self.scene.parent.blit(self.scene.surfImage, (0, 0))
+        self.scene.ActiveFrame()
+        pygame.display.update()
 
     def __ChangeGameState(self, gameMode:str):
         global STATE, GAMEMODE

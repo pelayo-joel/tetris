@@ -20,7 +20,8 @@ class PlayField(widgets.GridMap):
         self.start = pygame.time.get_ticks()
         self.__mode = mode
 
-        self.sec = 0
+        self.hour, self.minutes, self.sec = 0, 0, 0
+
         self.__score = {"Single":100, "Double":300, "Triple":700, "Tetris":1200}
         self.__currentScore = 0
         self.__clearedLines = 0
@@ -37,23 +38,22 @@ class PlayField(widgets.GridMap):
     
     def DisplayClock(self):
         self.sec = int((pygame.time.get_ticks() - self.start) / 1000)
-        hour, minutes = 0, 0
-        clockDisplay = f"{hour}:{minutes}:{self.sec}"
+        clockDisplay = f"{self.hour:02d}:{self.minutes:02d}:{self.sec:02d}"
 
         if self.sec == 60:
             self.start = pygame.time.get_ticks()
-            minutes += 1
-        if minutes == 60:
-            minutes = 0
-            hour += 1
-        if hour == 24:
-            hour = 0
+            self.minutes += 1
+        if self.minutes == 60:
+            self.minutes = 0
+            self.hour += 1
+        if self.hour == 24:
+            self.hour = 0
 
         return clockDisplay
     
     def TimerClock(self):
         self.sec = int((pygame.time.get_ticks() - self.start) / 1000)
-        timerDisplay = f"0:{60 - self.sec}"
+        timerDisplay = f"00:{(60 - self.sec):02d}"
 
         return timerDisplay
 
@@ -116,14 +116,13 @@ class PlayField(widgets.GridMap):
         for tile in self.__stackGroup:
 
             if tile.rect.y < 0:
-                self.ClearStatus()
-                self.ClearStack()
                 return True
 
         return False
     
     def ClearStatus(self):
         global LOCK_DELAY
+        self.start = pygame.time.get_ticks()
         self.__playfieldLvl = 1
         self.__currentScore = 0
         self.__clearedLines = 0
@@ -487,6 +486,8 @@ class InGame_UI:
         self.playfield = playfieldToMonitor
         self.panelsWidth = 150
         self.panelsHeightMax = self.playfield.rect.height
+        self.centerX = self.frame.get_rect().width / 2
+        self.centerY = self.frame.get_rect().height / 2
 
         self.pieceImageWidth = 0
         self.pieceImageHeight = 0
@@ -494,12 +495,25 @@ class InGame_UI:
         sidePanelImage = pygame.image.load(f"{UI_PATH}GameField-UI_SidePanel.png")
         holdWindowBorderImage = pygame.image.load(f"{UI_PATH}GameField-UI_Hold.png")
         nextWindowImage = pygame.image.load(f"{UI_PATH}GameField-UI_Next.png")
+        pauseWindowImage = pygame.image.load(f"{UI_PATH}GameField-UI_PauseWindow.png")
+        gameOverWindowImage = pygame.transform.smoothscale(pauseWindowImage, (450, 300))
+
+        self.focusedButton = pygame.image.load(f"{UI_PATH}Button2(focused).png")
+
+        self.count = -1
+        self.countdownImages = [pygame.image.load(f"{UI_PATH}StartupCountdown-Ready.png"), pygame.image.load(f"{UI_PATH}StartupCountdown-3.png"), pygame.image.load(f"{UI_PATH}StartupCountdown-2.png"), \
+          pygame.image.load(f"{UI_PATH}StartupCountdown-1.png"), pygame.image.load(f"{UI_PATH}StartupCountdown-Go.png")]
+
 
         self.__sidePanel = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax), pos=(self.playfield.left + self.playfield.gridSurf.get_width(), self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=sidePanelImage)
         self.__holdWindowBorder = widgets.Frame(self.frame, (self.panelsWidth, self.panelsHeightMax / 4), pos=(self.playfield.left - self.panelsWidth, self.playfield.top - self.playfield.border + 2), color=(1, 1, 1), surfImage=holdWindowBorderImage)
         self.__scoreSurface = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth - (self.playfield.border * 3), self.panelsHeightMax /2))
         self.__nextWindow = widgets.Frame(self.__sidePanel.surfImage, (self.panelsWidth, self.panelsHeightMax / 3), color=(1, 1, 1), surfImage=nextWindowImage)
         
+        self.pauseWindow = widgets.Frame(self.frame, (300, 200), (self.centerX - (pauseWindowImage.get_rect().width / 2), self.centerY - (pauseWindowImage.get_rect().height / 2)), color=(1, 1, 1), surfImage=pauseWindowImage)
+        self.gameOverWindow = widgets.Frame(self.frame, (500, 375), (self.centerX - (gameOverWindowImage.get_rect().width / 2), self.centerY - (gameOverWindowImage.get_rect().height / 2)), color=(1, 1, 1), surfImage=gameOverWindowImage)
+        self.gameOverWindowSurface = widgets.Frame(self.gameOverWindow.surfImage, ((self.gameOverWindow.get_rect().width - 64), (self.gameOverWindow.get_rect().height - 97)))
+
         self.holdWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
         self.holdWindowEraser.fill((0, 0, 0))
         self.nextWindowEraser = pygame.Surface((PLAYFIELD_CELL_SIZE * 2.5, PLAYFIELD_CELL_SIZE * 3.5))
@@ -508,13 +522,27 @@ class InGame_UI:
         self.sidePanelLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Status", 17, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=2)
         self.nextLabel = widgets.TextLabel(self.__sidePanel.surfImage, "Next", 20, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=62)
         self.modeLabel = widgets.TextLabel(self.__sidePanel.surfImage, f"{self.playfield.GetPlayfieldMode()}", 18, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=95)
+        self.pauseLabel = widgets.TextLabel(self.pauseWindow, "Pause", 20, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=8)
+        self.gameOverLabel = widgets.TextLabel(self.gameOverWindow, "Results", 23, FONT_PATH, color=(0, 0, 0), pourcentMode=True, centerX=True, posY=8)
         
-        self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=40, posY=8)
+        self.lvlLabel = widgets.TextLabel(self.__scoreSurface, f"Lvl: {self.playfield.GetPlayfieldLvl()}", 25, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=8)
         self.scoreLabel = widgets.TextLabel(self.__scoreSurface, f"Score: ", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=38, posY=24)
         self.score = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetFullScore()}", 17, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=32)
         self.nLinesClearedLab = widgets.TextLabel(self.__scoreSurface, f"Cleared:", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=31, posY=56)
         self.nLinesCleared = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=64)
         self.time = widgets.TextLabel(self.__scoreSurface, f"{self.playfield.DisplayClock()}", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=96)
+
+        
+
+        self.pauseMenu = widgets.GfxButton(self.pauseWindow, 170, 50, pourcentMode=True, centerX=True, posY=40, type="OnClick", buttonLabel="Menu", imageButton=f"{UI_PATH}Button2.png")
+        self.pauseRestart = widgets.GfxButton(self.pauseWindow, 170, 50, pourcentMode=True, centerX=True, posY=75, type="OnClick", buttonLabel="Restart", imageButton=f"{UI_PATH}Button2.png")
+        self.pauseArrowNav = [self.pauseMenu, self.pauseRestart]
+        self.pauseSelector = 0
+
+        self.gameOverMenu = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=25, posY=80, type="OnClick", buttonLabel="Menu", imageButton=f"{UI_PATH}Button2.png")
+        self.gameOverRestart = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=75, posY=80, type="OnClick", buttonLabel="Restart", imageButton=f"{UI_PATH}Button2.png")
+        self.gameOverArrowNav = [self.gameOverMenu, self.gameOverRestart]
+        self.gameOverSelector = 0
 
 
     def UpdateUI(self):
@@ -535,7 +563,7 @@ class InGame_UI:
             self.__holdWindowBorder.surfImage.blit(holdImage, ((self.__holdWindowBorder.width / 2 - (self.pieceImageWidth / 2)), (self.__holdWindowBorder.height / 2 - (self.pieceImageHeight / 2) + 10)))
         else:
             self.holdWindowEraser.fill((0, 0, 0))
-            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (self.pieceImageWidth / 2)), (self.__holdWindowBorder.height / 2 - (self.pieceImageHeight / 2) + 10)))
+            self.__holdWindowBorder.surfImage.blit(self.holdWindowEraser, ((self.__holdWindowBorder.width / 2 - (self.holdWindowEraser.get_width() / 2)), (self.__holdWindowBorder.height / 2 - (self.holdWindowEraser.get_height() / 2) + 10)))
 
     def UpdateNextWindow(self, shape):
         nextImage = pygame.image.load(f"{TILE_PATH}{shape}-Shape.png")
@@ -557,7 +585,37 @@ class InGame_UI:
             self.time.NewText(f"{self.playfield.DisplayClock()}")
 
     def PauseScreen(self):
-        return None
+        self.pauseWindow.ActiveFrame()
+        for pauseButton in self.pauseArrowNav:
+            pauseButton.ActiveButton()
 
-    def GameOverScreen(self, mode:str):
-        return None
+        self.pauseArrowNav[self.pauseSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
+
+    def GameOverScreen(self, mode:str, time:str):
+        if mode != "Marathon":
+            self.gameOverScoreLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Score", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=5)
+            self.gameOverScore = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=25, posY=15)
+            self.gameOverBestScore = widgets.TextLabel(self.gameOverWindowSurface, f"Best: {self.playfield.GetFullScore()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=75, posY=15)
+            self.gameOverLinesLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Lines", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=25)
+            self.gameOverLines = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=25, posY=35)
+            self.gameOverBestLines = widgets.TextLabel(self.gameOverWindowSurface, f"Best: {self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=75, posY=35)
+            self.gameOverTimeLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Time", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
+            self.gameOverTime = widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 16, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=55)
+        else:
+            self.gameOverScoreLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Score", 22, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
+            self.gameOverScore = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=25)
+            self.gameOverLinesLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Lines", 22, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=40)
+            self.gameOverLines = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines() - 120}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=50)
+
+        self.gameOverWindow.ActiveFrame()
+        self.gameOverWindow.surfImage.blit(self.gameOverWindowSurface, (self.gameOverWindow.get_rect().left + 32, self.gameOverWindow.get_rect().top + 74))
+
+        for gameOverButton in self.gameOverArrowNav:
+            gameOverButton.ActiveButton()
+
+        self.gameOverArrowNav[self.gameOverSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
+
+    def Countdown(self):
+        self.count += 1
+        frameCenter = (self.centerX - (self.countdownImages[self.count].get_rect().width / 2), self.centerY - (self.countdownImages[self.count].get_rect().height / 2))
+        return self.countdownImages[self.count], frameCenter
