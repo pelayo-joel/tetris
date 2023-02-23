@@ -1,40 +1,108 @@
 {
-    "Guest":{
-        "Classic":{
-            "Score":0,
-            "Level":0,
-            "Time":0,
-            "Lines Cleared":0
+    "test": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
         },
-        "Marathon":{
-            "Score":0,
-            "Level":0,
-            "Lines Cleared":0
+        "Marathon": {
+            "Score": 400,
+            "Lines Cleared": 4
         },
-        "Survival":{
-            "Score":0,
-            "Level":0,
-            "Time":0,
-            "Lines Cleared":0
-        }
+        "100-Lines Rush": {
+            "Score": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
     },
-    "Burger":{
-        "Classic":{
-            "Score":0,
-            "Level":0,
-            "Time":0,
-            "Lines Cleared":0
+    "burger": {
+        "Classic": {
+            "Score": 2500,
+            "Time": "00:01:35",
+            "Lines Cleared": 9
         },
-        "Marathon":{
-            "Score":0,
-            "Level":0,
-            "Lines Cleared":0
+        "Marathon": {
+            "Score": 1400,
+            "Lines Cleared": 6
         },
-        "Survival":{
-            "Score":0,
-            "Level":0,
-            "Time":0,
-            "Lines Cleared":0
-        }
+        "100-Lines Rush": {
+            "Score": 3400,
+            "Time": "00:02:55",
+            "Lines Cleared": 94
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "78a9a53d843555633d7b53a69b5d8e584a8708953fba2ed572cdb80461b58e54"
+    },
+    "leo": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Marathon": {
+            "Score": 0,
+            "Lines Cleared": 0
+        },
+        "100-Lines Rush": {
+            "Score": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "6161b2838ffa6ce17b84db3b45b4f8437855ecf43e75de2d1ad0008eaae91aa0"
+    },
+    "remy": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Marathon": {
+            "Score": 0,
+            "Lines Cleared": 0
+        },
+        "100-Lines Rush": {
+            "Score": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "c75cb66ae28d8ebc6eded002c28a8ba0d06d3a78c6b5cbf9b2ade051f0775ac4"
+    },
+    "lololololo": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Marathon": {
+            "Score": 1800,
+            "Lines Cleared": 9
+        },
+        "100-Lines Rush": {
+            "Score": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
     }
 }

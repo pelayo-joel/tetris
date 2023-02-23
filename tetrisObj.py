@@ -31,6 +31,10 @@ class PlayField(widgets.GridMap):
             self.__playfieldLvl = 25
             self.__clearedLines = 120
             LOCK_DELAY = 0.5
+        elif self.__mode == "100-Lines Rush":
+            self.__playfieldLvl = 15
+            self.__clearedLines = 75
+            LOCK_DELAY = 1.0
         else:
             self.__playfieldLvl = 1
 
@@ -480,6 +484,15 @@ class Tetromino:
 
 
 
+
+
+
+
+
+
+
+
+
 class InGame_UI:
     def __init__(self, frame:pygame.Surface, playfieldToMonitor:PlayField):
         self.frame = frame
@@ -539,8 +552,8 @@ class InGame_UI:
         self.pauseArrowNav = [self.pauseMenu, self.pauseRestart]
         self.pauseSelector = 0
 
-        self.gameOverMenu = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=25, posY=80, type="OnClick", buttonLabel="Menu", imageButton=f"{UI_PATH}Button2.png")
-        self.gameOverRestart = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=75, posY=80, type="OnClick", buttonLabel="Restart", imageButton=f"{UI_PATH}Button2.png")
+        self.gameOverMenu = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=25, posY=85, type="OnClick", buttonLabel="Menu", imageButton=f"{UI_PATH}Button2.png")
+        self.gameOverRestart = widgets.GfxButton(self.gameOverWindowSurface, 170, 50, pourcentMode=True, posX=75, posY=85, type="OnClick", buttonLabel="Restart", imageButton=f"{UI_PATH}Button2.png")
         self.gameOverArrowNav = [self.gameOverMenu, self.gameOverRestart]
         self.gameOverSelector = 0
 
@@ -581,6 +594,9 @@ class InGame_UI:
         if self.playfield.GetPlayfieldMode() == "Marathon":
             self.time.NewText(f"{self.playfield.TimerClock()}")
             self.nLinesCleared.NewText(f"{self.playfield.GetClearedLines() - 120}")
+        elif self.playfield.GetPlayfieldMode() == "100-Lines Rush":
+            self.time.NewText(f"{self.playfield.DisplayClock()}")
+            self.nLinesCleared.NewText(f"{175 - self.playfield.GetClearedLines()}")
         else:
             self.time.NewText(f"{self.playfield.DisplayClock()}")
 
@@ -591,21 +607,40 @@ class InGame_UI:
 
         self.pauseArrowNav[self.pauseSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
 
-    def GameOverScreen(self, mode:str, time:str):
+    def GameOverScreen(self, mode:str, time:str, bestScore:dict):
+        rowOneMarathon, rowTwoMarathon = 30, 70
+        rowOne, rowThree = 15, 85
+
         if mode != "Marathon":
-            self.gameOverScoreLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Score", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=5)
-            self.gameOverScore = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=25, posY=15)
-            self.gameOverBestScore = widgets.TextLabel(self.gameOverWindowSurface, f"Best: {self.playfield.GetFullScore()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=75, posY=15)
-            self.gameOverLinesLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Lines", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=25)
-            self.gameOverLines = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=25, posY=35)
-            self.gameOverBestLines = widgets.TextLabel(self.gameOverWindowSurface, f"Best: {self.playfield.GetClearedLines()}", 15, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=75, posY=35)
-            self.gameOverTimeLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Time", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
-            self.gameOverTime = widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 16, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=55)
+            widgets.TextLabel(self.gameOverWindowSurface, f"score", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"lines", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"time", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Overall Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Time']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=60)
+        elif mode == "100-Lines Rush":
+            widgets.TextLabel(self.gameOverWindowSurface, f"score", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"lines", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Overall Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Time']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=60)
         else:
-            self.gameOverScoreLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Score", 22, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
-            self.gameOverScore = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=25)
-            self.gameOverLinesLabel = widgets.TextLabel(self.gameOverWindowSurface, f"Lines", 22, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=40)
-            self.gameOverLines = widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines() - 120}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=50)
+            widgets.TextLabel(self.gameOverWindowSurface, f"score", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"lines", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=3)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Overall Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines() - 120}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=30)
+            widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=60)
 
         self.gameOverWindow.ActiveFrame()
         self.gameOverWindow.surfImage.blit(self.gameOverWindowSurface, (self.gameOverWindow.get_rect().left + 32, self.gameOverWindow.get_rect().top + 74))

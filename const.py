@@ -8,14 +8,13 @@ pygame.mixer.init()
 #Time/State variables
 
 RUNNING = True
-PAUSE = False
 STATE = "Menu"
-MENUSTATE = "Main Menu"
+MENUSTATE = "Login"
 GAMEMODE = "Training"
 FPS = 60
 CLOCK = 0
 TIME_INTERVAL = 1000
-FAST_TIME_INTERVAL = 100
+FAST_TIME_INTERVAL = 70
 LOCK_DELAY = 1.5
 
 
@@ -94,9 +93,11 @@ SoundEffects = {
     "Hold":pygame.mixer.Sound(f"{SFX_PATH}hold.wav"),
     "Pause":pygame.mixer.Sound(f"{SFX_PATH}pause.wav"),
     "Clear":pygame.mixer.Sound(f"{SFX_PATH}clear.wav"),
+    "Key":pygame.mixer.Sound(f"{SFX_PATH}key.wav"),
     "Select":pygame.mixer.Sound(f"{SFX_PATH}select.wav"),
     "Confirm":pygame.mixer.Sound(f"{SFX_PATH}confirm.wav"),
     "Return":pygame.mixer.Sound(f"{SFX_PATH}return.wav"),
+    "Message":pygame.mixer.Sound(f"{SFX_PATH}msg.wav"),
     "Save":pygame.mixer.Sound(f"{SFX_PATH}save.wav"),
     "GameOver":pygame.mixer.Sound(f"{SFX_PATH}gameover.wav"),
 
@@ -107,6 +108,8 @@ SoundEffects = {
         "Tetris":pygame.mixer.Sound(f"{SFX_PATH}tetris.wav")
     },
 
+    "Warning":pygame.mixer.Sound(f"{SFX_PATH}warning.wav"),
+    "StackFall":pygame.mixer.Sound(f"{SFX_PATH}addstack.wav"),
     "LvlUp":pygame.mixer.Sound(f"{SFX_PATH}lvlup.wav"),
     "Lvl25":pygame.mixer.Sound(f"{SFX_PATH}lvl25.wav"),
     "HELL":pygame.mixer.Sound(f"{SFX_PATH}HELL.wav"),

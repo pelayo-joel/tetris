@@ -92,6 +92,7 @@ class TextLabel:
     #Places the object (sets up 'self.left' and 'self.top')
     def __InitPos(self):
         self.width, self.height = self.myText.get_width(), self.myText.get_height()
+
         if self.centerX and self.centerY == False:
             if self.pourcentMode:
                 self.left = self.parentMidX-(self.width/2)
@@ -99,6 +100,7 @@ class TextLabel:
             else:
                 self.left = self.parentMidX-(self.width/2)
                 self.top = self.posY
+
         elif self.centerY and self.centerX == False:
             if self.pourcentMode:
                 self.top = self.parentMidY-(self.width/2)
@@ -106,12 +108,15 @@ class TextLabel:
             else:
                 self.top = self.parentMidY-(self.height/2)
                 self.left = self.posX
+
         elif self.centerX and self.centerY:
             self.top = self.parentMidY-(self.height/2)
             self.left = self.parentMidX-(self.width/2)
+
         elif self.pourcentMode:
             self.left = int(self.frame.get_width() * ((self.posX)/100)) - int(self.width/2)
             self.top = int(self.frame.get_height() * ((self.posY)/100)) - int(self.height/2)
+        
         else:
             self.left = self.posX
             self.top = self.posY
@@ -120,7 +125,9 @@ class TextLabel:
     """Public methods"""
 
     #Changes the text by newText
-    def NewText(self, newText):
+    def NewText(self, newText, color=None):
+        if color != None:
+            self.color = color
         self.textFrame.fill(self.bg)
         self.textFrame.ActiveFrame((self.left, self.top))
 
@@ -134,7 +141,29 @@ class TextLabel:
         self.textFrame.ActiveFrame((self.left, self.top))
         pygame.display.update(self.textFrame.get_rect())
 
+    def InputText(self, event):
+        input = self.text
+        if event == pygame.K_BACKSPACE:
+            input = input[:-1]
+            self.NewText(input)
+            #print(self.text, input, input[:-1])
+        else:
+            input += event.unicode
+            self.NewText(input)
+            #print(input)
+        print(self.text, input, input[:-1])
+
         
+
+'''class TextInput(TextLabel):
+    def __init__(self, parent:pygame.Surface, pourcentMode:bool=False, posX:int=0, posY:int=0):
+        self.frame = parent
+        self.text = ""
+
+        if self.pourcentMode:
+            self.left = int(self.frame.get_width() * ((self.posX)/100))
+            self.top = int(self.frame.get_height() * ((self.posY)/100))'''
+
 
 
 
@@ -430,7 +459,7 @@ class Slider:
 class GfxButton:
     """Constructor"""
     def __init__(self, parent:pygame.Surface, width:int, height:int, pourcentMode:bool=False, posX:int=0, posY:int=0, centerX:bool=False, centerY:bool=False, color:tuple=(255,255,255),
-     borderR:int=0, type:str="Bool", buttonLabel:str="Button", imageButton:str=None, func=None):
+     borderR:int=0, type:str="Bool", buttonLabel:str="Button", labelSize:int=20, imageButton:str=None, func=None):
 
         self.frame = parent
         self.buttonFrame = None
@@ -438,6 +467,7 @@ class GfxButton:
         self.centerX, self.centerY, self.pourcentMode, self.posX, self.posY = centerX, centerY, pourcentMode, posX, posY
         self.width, self.height = width, height
         self.__InitPos()
+        self.labelSize = labelSize
 
         self.borderRad = borderR
         self.fill = color
@@ -508,9 +538,9 @@ class GfxButton:
             myText = font.render(self.label, True, color)
             if self.isImage:
                 if surf != None:
-                    TextLabel(surf, label, 20, FONT_PATH, centerX=True, centerY=True)
+                    TextLabel(surf, label, self.labelSize, FONT_PATH, centerX=True, centerY=True)
                 else:
-                    TextLabel(self.buttonFrame, label, 20, FONT_PATH, centerX=True, centerY=True)
+                    TextLabel(self.buttonFrame, label, self.labelSize, FONT_PATH, centerX=True, centerY=True)
             else:
                 self.frame.blit(myText, myText.get_rect(center=self.buttonFormat.center))
         else:
