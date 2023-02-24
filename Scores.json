@@ -11,6 +11,7 @@
         },
         "100-Lines Rush": {
             "Score": 0,
+            "Lines Cleared": 0,
             "Time": "00:00:00"
         },
         "Survival": {
@@ -28,17 +29,17 @@
         },
         "Marathon": {
             "Score": 1400,
-            "Lines Cleared": 6
+            "Lines Cleared": 9
         },
         "100-Lines Rush": {
-            "Score": 3400,
-            "Time": "00:02:55",
-            "Lines Cleared": 94
+            "Score": 0,
+            "Lines Cleared": 0,
+            "Time": "00:00:00"
         },
         "Survival": {
-            "Score": 0,
-            "Time": "00:00:00",
-            "Lines Cleared": 0
+            "Score": 18800,
+            "Time": "00:08:58",
+            "Lines Cleared": 97
         },
         "Password": "78a9a53d843555633d7b53a69b5d8e584a8708953fba2ed572cdb80461b58e54"
     },
@@ -54,6 +55,7 @@
         },
         "100-Lines Rush": {
             "Score": 0,
+            "Lines Cleared": 0,
             "Time": "00:00:00"
         },
         "Survival": {
@@ -75,6 +77,7 @@
         },
         "100-Lines Rush": {
             "Score": 0,
+            "Lines Cleared": 0,
             "Time": "00:00:00"
         },
         "Survival": {
@@ -96,6 +99,7 @@
         },
         "100-Lines Rush": {
             "Score": 0,
+            "Lines Cleared": 0,
             "Time": "00:00:00"
         },
         "Survival": {
@@ -104,5 +108,49 @@
             "Lines Cleared": 0
         },
         "Password": "9af15b336e6a9619928537df30b2e6a2376569fcf9d7e773eccede65606529a0"
+    },
+    "enzo": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Marathon": {
+            "Score": 0,
+            "Lines Cleared": 0
+        },
+        "100-Lines Rush": {
+            "Score": 0,
+            "Lines Cleared": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
+    },
+    "jacques": {
+        "Classic": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Marathon": {
+            "Score": 0,
+            "Lines Cleared": 0
+        },
+        "100-Lines Rush": {
+            "Score": 0,
+            "Lines Cleared": 0,
+            "Time": "00:00:00"
+        },
+        "Survival": {
+            "Score": 0,
+            "Time": "00:00:00",
+            "Lines Cleared": 0
+        },
+        "Password": "a4f0e1d1b5eb23e3482a14b4a9d4e8106e83f7887471e4a73c2557ade280bfe5"
     }
 }

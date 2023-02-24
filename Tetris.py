@@ -5,6 +5,7 @@ from tetrisObj import *
 from collections import OrderedDict
 
 
+
 class ScoreManager:
     def __init__(self, scene):
         with open("Scores.json") as playersScoreData:
@@ -54,141 +55,8 @@ class ScoreManager:
         self.scoreMode = ["Classic", "Marathon", "100-Lines Rush", "Survival"]
         self.scoreSelector = 0
 
-    def __NewPlayer(self):
-        formatName = self.currentPlayer.lower()
-
-        if self.__password == "":
-            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        elif " " in self.currentPlayer or "\t" in self.currentPlayer or self.currentPlayer == "":
-            self.loginMessage.NewText("'  ' are not allowed", color=(160, 50, 50))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        elif formatName in self.playerList:
-            self.loginMessage.NewText("We already know you", color=(255, 255, 255))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        
-        password = hashlib.sha256(self.__password.encode()).hexdigest()
-
-        self.__scoresData.update({formatName:{
-            "Classic":{
-                "Score":0, 
-                "Time":"00:00:00", 
-                "Lines Cleared":0
-            },
-            "Marathon":{
-                "Score":0,
-                "Lines Cleared":0
-            },
-            "100-Lines Rush":{
-                "Score":0,
-                "Time":"00:00:00"
-            },
-            "Survival":{
-                "Score":0,
-                "Time":"00:00:00",
-                "Lines Cleared":0
-            },
-            "Password":password
-        }})
-
-        self.__UpdateJSON()
-        self.playerList = list(self.__scoresData.keys())
-
-        self.loginMessage.NewText("You've been added, now log in !", color=(20, 130, 20))
-        pygame.mixer.Sound.play(SoundEffects["Confirm"])
-
-    
-    def __Login(self):
-        if self.__password == "":
-            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-
-        password = hashlib.sha256(self.__password.encode()).hexdigest()
-        formatName = self.currentPlayer.lower()
-
-        if formatName not in self.playerList:
-            self.loginMessage.NewText("New user ? Add yourself !", color=(255, 255, 255))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        elif formatName in self.playerList and password != self.__scoresData[formatName]["Password"]:
-            self.loginMessage.NewText("Wrong password", color=(130, 20, 20))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        else:
-            self.__playerScores = self.__scoresData[formatName]
-            pygame.mixer.Sound.play(SoundEffects["Confirm"])
-            self.__loginValidation = True
-
-    def __UpdateJSON(self):
-        with open("Scores.json", "w") as playersScoreData:
-            json.dump(self.__scoresData, playersScoreData, indent=4, separators=(",",": "))
-
-    def __SortingScoreData(self, mode:str):
-
-        orderDict = OrderedDict()
-        sortedScores = sorted(self.__scoresData, key=lambda x: self.__scoresData[x][mode]["Score"], reverse=True)
-
-        for key in sortedScores:
-            orderDict[key] = self.__scoresData[key]
-
-        return sortedScores
-
-    def __ScoreBoardData(self, scoreMode:str):
-        self.scoreBoardWindow.ActiveFrame()
-        rankColumn, nameColumn = 10, 27
-        labelRow = 30
-        scoreColumn = [45, 65, 85]
-        rankRows = [45, 60, 75]
-        labels = ["Score", "Lines", "Time"]
-        
-        sortedNames = self.__SortingScoreData(scoreMode)
-
-        scoreDataLabel = []
-        linesDataLabel = []
-        timeDataLabel = []
-
-        for i in range(3):
-            scoreLabel = widgets.TextLabel(self.scoreBoardWindow, "", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[0], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            scoreDataLabel.append(scoreLabel)
-            
-            linesLabel = widgets.TextLabel(self.scoreBoardWindow, "", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            linesDataLabel.append(linesLabel)
-
-            timeLabel = widgets.TextLabel(self.scoreBoardWindow, "", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            timeDataLabel.append(timeLabel)
-
-        widgets.TextLabel(self.scoreBoardWindow, "no.", 18, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
-        widgets.TextLabel(self.scoreBoardWindow, "Name", 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
-
-        for i in range(3):
-            widgets.TextLabel(self.scoreBoardWindow, labels[i], 13, FONT_PATH, pourcentMode=True, posX=scoreColumn[i], posY=labelRow, color=(255, 255, 255), bgColor=(0, 0, 0))
-            widgets.TextLabel(self.scoreBoardWindow, str(i + 1), 22, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            
-            if self.currentPlayer == sortedNames[i]:
-                widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(86, 222, 187), bgColor=(0, 0, 0))
 
 
-            if scoreMode == "100-Lines Rush":
-                scoreDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]))
-                timeDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Time"]))
-                linesDataLabel[i].NewText("---")
-
-            elif scoreMode == "Marathon":
-                scoreDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]))
-                linesDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]))
-                timeDataLabel[i].NewText("---")
-
-            else:
-                scoreDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]))
-                linesDataLabel[i].NewText(str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]))
-                timeDataLabel[i].NewText(self.__scoresData[sortedNames[i]][scoreMode]["Time"])
-
-        pygame.display.update()
 
 
     def DefineCurrentPlayer(self):
@@ -258,11 +126,14 @@ class ScoreManager:
 
         self.loginEntrySelector = max(min(self.loginEntrySelector, 3), 0)
 
+
+
     def ScoreBoard(self):
         global RUNNING, STATE
         self.scoreBoardWindow.ActiveFrame()
         widgets.TextLabel(self.scene, "ScoreBoard", 22, FONT_PATH, pourcentMode=True, centerX=True, posY=6, color=(255, 255, 255), bgColor=(1, 1, 1))
         self.__ScoreBoardData(self.scoreMode[self.scoreSelector])
+
 
         for i in range(len(self.loginSelection)):
             self.scoreModeSelection[i].ActiveButton()
@@ -270,6 +141,7 @@ class ScoreManager:
 
             if i == self.scoreSelector:
                 self.scoreModeSelection[i].ActiveButton(focused=True, focusedImage=self.modeFocused)
+
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -300,6 +172,8 @@ class ScoreManager:
         self.scoreSelector = max(min(self.scoreSelector, 3), 0)
         return True
 
+
+
     def UserClear(self):
         self.currentPlayer = ""
         self.passLab = ""
@@ -309,16 +183,19 @@ class ScoreManager:
 
         self.entriesData = [self.currentPlayer, self.__password]
 
+
         for i in range(len(self.loginEntries)):
             self.loginEntries[i].NewText(self.entriesData[i])
 
-        
         self.loginMessage.NewText("", color=(255, 255, 255))
         self.loginEntrySelector = 0
+
+
 
     def SaveScore(self, mode, newLines, newTime, newScore):
         hours, minutes, sec = newTime.split(":")
         timeScore = (int(hours) * 3600) + (int(minutes) * 60) + int(sec)
+
 
         if mode != "Marathon":
             currentHours, currentMinutes, currentSec = self.__playerScores[mode]["Time"].split(":")
@@ -329,6 +206,15 @@ class ScoreManager:
                 self.__playerScores[mode]["Lines Cleared"] = newLines
                 self.__playerScores[mode]["Time"] = newTime
         
+        elif mode == "100-Lines Rush":
+            currentHours, currentMinutes, currentSec = self.__playerScores[mode]["Time"].split(":")
+            currentBestTime = (int(currentHours) * 3600) + (int(currentMinutes) * 60) + int(currentSec)
+
+            if newScore >= self.__playerScores[mode]["Score"]:
+                self.__playerScores[mode]["Score"] = newScore
+                self.__playerScores[mode]["Lines Cleared"] = newLines - 70
+                self.__playerScores[mode]["Time"] = newTime
+
         else:
             newLines -= 120
 
@@ -343,6 +229,146 @@ class ScoreManager:
 
     def GetPlayerScores(self):
         return self.__playerScores
+
+
+
+
+
+    def __NewPlayer(self):
+        formatName = self.currentPlayer.lower()
+
+        if self.__password == "":
+            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        elif " " in self.currentPlayer or "\t" in self.currentPlayer or self.currentPlayer == "":
+            self.loginMessage.NewText("'  ' are not allowed", color=(160, 50, 50))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        elif formatName in self.playerList:
+            self.loginMessage.NewText("We already know you", color=(255, 255, 255))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        
+        password = hashlib.sha256(self.__password.encode()).hexdigest()
+
+        self.__scoresData.update({formatName:{
+            "Classic":{
+                "Score":0, 
+                "Time":"00:00:00", 
+                "Lines Cleared":0
+            },
+            "Marathon":{
+                "Score":0,
+                "Lines Cleared":0
+            },
+            "100-Lines Rush":{
+                "Score":0,
+                "Lines Cleared": 0,
+                "Time":"00:00:00"
+            },
+            "Survival":{
+                "Score":0,
+                "Time":"00:00:00",
+                "Lines Cleared":0
+            },
+            "Password":password
+        }})
+
+        self.__UpdateJSON()
+        self.playerList = list(self.__scoresData.keys())
+
+        self.loginMessage.NewText("You've been added, now log in !", color=(20, 130, 20))
+        pygame.mixer.Sound.play(SoundEffects["Confirm"])
+
+    
+
+    def __Login(self):
+        if self.__password == "":
+            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+
+        password = hashlib.sha256(self.__password.encode()).hexdigest()
+        formatName = self.currentPlayer.lower()
+
+        if formatName not in self.playerList:
+            self.loginMessage.NewText("New user ? Add yourself !", color=(255, 255, 255))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        elif formatName in self.playerList and password != self.__scoresData[formatName]["Password"]:
+            self.loginMessage.NewText("Wrong password", color=(130, 20, 20))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        else:
+            self.__playerScores = self.__scoresData[formatName]
+            pygame.mixer.Sound.play(SoundEffects["Confirm"])
+            self.__loginValidation = True
+
+    def __UpdateJSON(self):
+        with open("Scores.json", "w") as playersScoreData:
+            json.dump(self.__scoresData, playersScoreData, indent=4, separators=(",",": "))
+
+
+
+    def __SortingScoreData(self, mode:str):
+
+        orderDict = OrderedDict()
+        sortedScores = sorted(self.__scoresData, key=lambda x: self.__scoresData[x][mode]["Score"], reverse=True)
+
+        for key in sortedScores:
+            orderDict[key] = self.__scoresData[key]
+
+        return sortedScores
+
+
+
+    def __ScoreBoardData(self, scoreMode:str):
+        self.scoreBoardWindow.ActiveFrame()
+        rankColumn, nameColumn = 10, 27
+        labelRow = 30
+        scoreColumn = [45, 65, 85]
+        rankRows = [45, 60, 75]
+        labels = ["Score", "Lines", "Time"]
+        
+        sortedNames = self.__SortingScoreData(scoreMode)
+
+
+        widgets.TextLabel(self.scoreBoardWindow, "no.", 18, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
+        widgets.TextLabel(self.scoreBoardWindow, "Name", 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
+
+        for i in range(3):
+            widgets.TextLabel(self.scoreBoardWindow, labels[i], 13, FONT_PATH, pourcentMode=True, posX=scoreColumn[i], posY=labelRow, color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.scoreBoardWindow, str(i + 1), 22, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+
+            widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[0], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.scoreBoardWindow, "---", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))            
+
+
+            if self.currentPlayer == sortedNames[i]:
+                widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(86, 222, 187), bgColor=(0, 0, 0))
+
+
+            if scoreMode != "Marathon":
+                widgets.TextLabel(self.scoreBoardWindow, self.__scoresData[sortedNames[i]][scoreMode]["Time"], 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+
+
+            if scoreMode == "100-Lines Rush":
+                rushLinesLab = widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+            
+                if self.__scoresData[sortedNames[i]][scoreMode]['Lines Cleared'] == 100:
+                    rushLinesLab.NewText(f"{self.__scoresData[sortedNames[i]][scoreMode]['Lines Cleared']}", color=(235, 175, 30))
+
+            else:
+                widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+
+        pygame.display.update()
+
+
+
+
+
 
     
 
@@ -400,6 +426,85 @@ class Game:
 
         pygame.mixer.music.play(-1)
 
+    def GameLoop(self):
+        global CLOCK, RUNNING, TIME_INTERVAL, STATE
+        timer = pygame.time.get_ticks()
+        self.clock.tick(FPS)
+        self.GameUI.UpdateUI()
+
+
+        for event in pygame.event.get():
+
+            if event.type == pygame.QUIT:
+                RUNNING = False
+                STATE = None
+
+            self.__InGameControls(event)
+        
+
+        self.GameUI.UpdateStatusWindow(self.scoreManager.GetPlayerScores())
+        self.playfield.DrawStack()
+
+
+        if timer > CLOCK and not self.tetromino.get_TouchedGround():
+            self.tetromino.TetrominoFall()
+            CLOCK += self.speed
+
+        elif self.tetromino.Landed(CLOCK):
+            self.tetromino.AddToStack()
+            self.playfield.ClearingLines()
+
+            if self.playfield.PlayfieldLvlUp():
+                if self.playfield.GetPlayfieldLvl() >= 25:
+                    TIME_INTERVAL -= 50
+                elif self.playfield.GetPlayfieldLvl() >= 31:
+                    TIME_INTERVAL -= 95
+                else:
+                    TIME_INTERVAL -= 25
+
+                TIME_INTERVAL = max(30, TIME_INTERVAL)
+
+            if self.playfield.CheckLoss():
+                TIME_INTERVAL = 1000
+                self.tetroHold = None
+
+                if self.__mode == "Training":
+                    self.GameUI.UpdateHoldWindow()
+                    self.__Clear()
+                else:
+                    self.tetromino.TetroKill()
+                    self.playfield.DrawStack()
+                    self.__GameOver()
+
+            self.__NewTetromino()
+
+        elif self.__mode == "Marathon" and self.playfield.sec == 61:
+            self.tetromino.TetroKill()
+            self.playfield.DrawStack()
+            self.__GameOver()
+
+        elif self.__mode == "100-Lines Rush" and (175 - self.playfield.GetClearedLines()) <= 0:
+            self.tetromino.TetroKill()
+            self.playfield.DrawStack()
+            self.__GameOver()
+        
+        self.scene.ActiveFrame()
+        pygame.display.update()
+
+
+
+    def Restart(self):
+        return self.__restart
+
+
+
+    def GetStates(self):
+        return RUNNING, STATE, MENUSTATE
+    
+
+
+
+
     def __ChangeGameState(self):
         global STATE, MENUSTATE, PAUSE
         PAUSE, STATE, MENUSTATE = False, "Menu", "Game Modes"
@@ -436,7 +541,7 @@ class Game:
         self.tetroHold = None
         self.playfield.ClearStatus()
         self.playfield.ClearStack()
-        self.GameUI.UpdateStatusWindow()
+        self.GameUI.UpdateStatusWindow(self.scoreManager.GetPlayerScores())
         #self.playfield.start += pauseTimer
         CLOCK = pygame.time.get_ticks()
         PAUSE = False
@@ -590,74 +695,6 @@ class Game:
             self.speed = TIME_INTERVAL
 
 
-    def GameLoop(self):
-        global CLOCK, RUNNING, TIME_INTERVAL, STATE
-        timer = pygame.time.get_ticks()
-        self.clock.tick(FPS)
-        self.GameUI.UpdateUI()
-
-        for event in pygame.event.get():
-
-            if event.type == pygame.QUIT:
-                RUNNING = False
-                STATE = None
-
-            self.__InGameControls(event)
-        
-
-        if timer > CLOCK and not self.tetromino.get_TouchedGround():
-            self.tetromino.TetrominoFall()
-            CLOCK += self.speed
-
-
-        elif self.tetromino.Landed(CLOCK):
-            self.tetromino.AddToStack()
-            self.playfield.ClearingLines()
-
-            if self.playfield.PlayfieldLvlUp():
-                if self.playfield.GetPlayfieldLvl() >= 25:
-                    TIME_INTERVAL -= 50
-                elif self.playfield.GetPlayfieldLvl() >= 31:
-                    TIME_INTERVAL -= 95
-                else:
-                    TIME_INTERVAL -= 25
-
-                TIME_INTERVAL = max(30, TIME_INTERVAL)
-
-            if self.playfield.CheckLoss():
-                TIME_INTERVAL = 1000
-                self.tetroHold = None
-
-                if self.__mode == "Training":
-                    self.GameUI.UpdateHoldWindow()
-                    self.__Clear()
-                else:
-                    self.tetromino.TetroKill()
-                    self.playfield.DrawStack()
-                    self.__GameOver()
-
-            self.__NewTetromino()
-
-        elif self.__mode == "Marathon" and self.playfield.sec == 61:
-            self.tetromino.TetroKill()
-            self.playfield.DrawStack()
-            self.__GameOver()
-
-        elif self.__mode == "100-Lines Rush" and (175 - self.playfield.GetClearedLines()) <= 0:
-            self.tetromino.TetroKill()
-            self.playfield.DrawStack()
-            self.__GameOver()
-        
-        self.GameUI.UpdateStatusWindow()
-        self.playfield.DrawStack()
-        self.scene.ActiveFrame()
-        pygame.display.update()
-
-    def Restart(self):
-        return self.__restart
-
-    def GetStates(self):
-        return RUNNING, STATE, MENUSTATE
 
 
 
@@ -680,6 +717,14 @@ class Menu:
         self.focusedButton = pygame.image.load(f"{UI_PATH}Button2(focused).png")
         self.focusedButton = pygame.transform.smoothscale(self.focusedButton, (320, 80))
 
+        self.__simultaneousFallingPiece = random.randint(15, 25)
+        self.__fall = 0
+        self.__rndLeftPosition = []
+        self.__rndTopPosition = []
+        self.__rndSpeed = []
+        self.__fallingPieces = []
+        self.__RandomGeneration()
+        
 
         self.mainMenuGame = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=55, type="OnClick", buttonLabel="Game Modes", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Game Modes"))
         self.mainMenuScore = widgets.GfxButton(self.scene, 320, 80, pourcentMode=True, centerX=True, posY=70, type="OnClick", buttonLabel="Score Board", imageButton=f"{UI_PATH}Button2.png", func=lambda:self.__ChangeMenuState("Score Board"))
@@ -708,6 +753,113 @@ class Menu:
             pygame.mixer.music.set_volume(0.35)
             pygame.mixer.music.play(-1)
 
+
+
+
+
+    def MenuLoop(self):
+        self.scene.ActiveFrame()
+        self.__fall += 2
+
+        if self.menuState != "Login":
+            self.__BackgroundAnimation()
+
+        
+        if self.menuState == "Login":
+            self.__LoginMenu()
+
+        elif self.menuState == "Main Menu":
+            self.__MainMenu()
+
+        elif self.menuState == "Game Modes":
+            self.__GameMenu()
+
+        elif self.menuState == "Score Board":
+            self.__ScoreMenu()
+
+        elif self.menuState == "Credits":
+            self.__MenuControls()
+
+
+        pygame.display.update()
+
+
+
+    def GetStates(self):
+        return RUNNING, STATE, GAMEMODE
+    
+
+
+
+
+
+    def __BackgroundAnimation(self):
+        i = 0
+        self.scene.blit(self.scene.surfImage, (0, 0))
+
+        while i < self.__simultaneousFallingPiece:
+            self.__rndTopPosition[i] += self.__rndSpeed[i]
+            self.scene.blit(self.__fallingPieces[i], (self.__rndLeftPosition[i], self.__rndTopPosition[i]))
+            
+            rndOneActiveRotation = random.randint(100, 600)
+            rndTwoActiveRotation = random.randint(100, 600)
+            rndThreeActiveRotation = random.randint(100, 600)
+
+            if self.__rndTopPosition[i] == rndOneActiveRotation or self.__rndTopPosition[i] == rndTwoActiveRotation or self.__rndTopPosition[i] == rndThreeActiveRotation:
+                self.__fallingPieces[i] = pygame.transform.rotate(self.__fallingPieces[i], random.choice([90, 270]))
+        
+            if self.__rndTopPosition[i] >= 720:
+                self.__RandomPieceGeneration(i)
+
+            i += 1
+
+
+
+    def __RandomPieceGeneration(self, index):
+        pieceShape = random.choice(list(Tetrominoes.keys()))
+        self.__fallingPieces[index] = pygame.image.load(f"{TILE_PATH}{pieceShape}-Shape.png")
+
+        rndRotation = random.choice([0, 90, 180, 270])
+        rndSide = random.choice([200, 650])
+        rndSpeed = random.randint(1, 3)
+        rndX = random.randint((rndSide - 200), rndSide)
+        rndY = random.randint(-1600, 0)
+
+        rndWidth, rndHeight = random.randint(70, 85), random.randint(90, 115)
+        self.__fallingPieces[index] = pygame.transform.smoothscale(self.__fallingPieces[index], (rndWidth, rndHeight))
+        self.__fallingPieces[index] = pygame.transform.rotate(self.__fallingPieces[index], rndRotation)
+
+        self.__rndSpeed[index] = rndSpeed
+        self.__rndLeftPosition[index] = rndX
+        self.__rndTopPosition[index] = rndY
+
+
+
+    def __RandomGeneration(self):
+        i = 0
+        while i < self.__simultaneousFallingPiece:
+            pieceShape = random.choice(list(Tetrominoes.keys()))
+            piece = pygame.image.load(f"{TILE_PATH}{pieceShape}-Shape.png")
+
+            rndRotation = random.choice([0, 90, 180, 270])
+            rndSide = random.choice([200, 650])
+            rndSpeed = random.randint(1, 3)
+            rndX = random.randint((rndSide - 200), rndSide)
+            rndY = random.randint(-1000, 0)
+
+            rndWidth, rndHeight = random.randint(70, 85), random.randint(90, 115)
+            piece = pygame.transform.smoothscale(piece, (rndWidth, rndHeight))
+            piece = pygame.transform.rotate(piece, rndRotation)
+
+            self.__fallingPieces.append(piece)
+            self.__rndLeftPosition.append(rndX)
+            self.__rndTopPosition.append(rndY)
+            self.__rndSpeed.append(rndSpeed)
+
+            i += 1
+
+
+
     def __ChangeMenuState(self, nextState:str):
         if nextState == "Login":
             self.scoreManager.UserClear()
@@ -719,10 +871,14 @@ class Menu:
         self.scene.blit(self.scene.surfImage, (0, 0))
         pygame.display.update()
 
+
+
     def __ChangeGameState(self, gameMode:str):
         global STATE, GAMEMODE
         GAMEMODE = gameMode
         STATE = "Game"
+
+
 
     def __MenuControls(self):
         global RUNNING, STATE
@@ -757,12 +913,16 @@ class Menu:
                 
                 self.arrowSelector = (self.arrowSelector % len(self.currentMenu))
 
+
+
     def __LoginMenu(self):
         if self.scoreManager.DefineCurrentPlayer():
             pygame.mixer.music.load(InGameMusic["Menu"])
             pygame.mixer.music.set_volume(0.35)
             pygame.mixer.music.play(-1)
             self.__ChangeMenuState("Main Menu")
+
+
 
     def __MainMenu(self):
         self.scene.blit(self.mainLogo, ((self.scene.parent.get_width() / 2) - (self.mainLogo.get_width() / 2), -50))
@@ -775,9 +935,13 @@ class Menu:
         
         self.__MenuControls()
 
+
+
     def __ScoreMenu(self):
         if not self.scoreManager.ScoreBoard():
             self.__ChangeMenuState("Main Menu")
+
+
 
     def __GameMenu(self):
         self.currentMenu = self.gameMenuArrowNav
@@ -788,19 +952,6 @@ class Menu:
         self.currentMenu[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
         self.__MenuControls()
 
-    def MenuLoop(self):
-        self.scene.ActiveFrame()
-        
-        if self.menuState == "Login":
-            self.__LoginMenu()
-        elif self.menuState == "Main Menu":
-            self.__MainMenu()
-        elif self.menuState == "Game Modes":
-            self.__GameMenu()
-        elif self.menuState == "Score Board":
-            self.__ScoreMenu()
 
-        pygame.display.update()
 
-    def GetStates(self):
-        return RUNNING, STATE, GAMEMODE
+

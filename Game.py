@@ -1,7 +1,6 @@
 import Tetris
 from const import *
 from widgets import *
-#from tetrisObj import *
 
 pygame.init()
 pygame.display.set_caption('Tetris69')
