@@ -43,6 +43,7 @@ class PlayField(widgets.GridMap):
             LOCK_DELAY = 1.0
 
         elif self.__mode == "Survival":
+            self.addFlag = False
             self.__timerStackAdd = [30, 40, 50, 60]
             self.__survivalHole = random.randint(0, self.nColumns)
             self.__survivalStackAdd = random.randint(1, 4)
@@ -59,7 +60,7 @@ class PlayField(widgets.GridMap):
 
     def DisplayClock(self):
         self.sec = int((pygame.time.get_ticks() - self.start) / 1000)
-        clockDisplay = f"{self.hour:02d}:{self.minutes:02d}:{self.sec:02d}"
+        clockDisplay = f"{self.hour:d}:{self.minutes:02d}:{self.sec:02d}"
 
         if self.sec == 60:
             self.start = pygame.time.get_ticks()
@@ -96,6 +97,7 @@ class PlayField(widgets.GridMap):
         elif timeLeft <= 0:
             self.__AddStack()
             pygame.mixer.Sound.play(SoundEffects["StackFall"])
+
             self.__survivorStart = pygame.time.get_ticks()
             self.__survivalHole = random.randint(0, self.nColumns)
             self.__survivalStackAdd = random.randint(1, 4)
@@ -165,6 +167,8 @@ class PlayField(widgets.GridMap):
                     pygame.mixer.Sound.play(SoundEffects["NICE"])
 
                 self.multiplierTSpin = 1.0
+
+            #self.DrawStack()
 
 
 
@@ -254,10 +258,15 @@ class PlayField(widgets.GridMap):
         return self.__clearedLines
     
 
+    def GetAddedLines(self):
+        return self.__survivalStackAdd
+
 
 
 
     def __AddStack(self):
+        self.addFlag = True
+
         for row in range(0, self.nRows):
             for column in range(0, self.nColumns):
                 if self.stack[row][column] != None:
@@ -271,11 +280,19 @@ class PlayField(widgets.GridMap):
                     stackTile.TileUpdate()
                     self.__stackGroup.add(stackTile)
                     self.stack[row][column] = stackTile
+
+            self.DrawStack()
+
+                
+    
     
     
 
         
     
+
+
+
 
 
 
@@ -374,6 +391,10 @@ class Tetromino:
         if pygame.key.get_pressed()[pygame.K_DOWN]:
             pygame.mixer.Sound.play(SoundEffects["Move"])
 
+
+    
+    def TetrominoUp(self, up):
+        self.__Move(-DIRECTIONS["down"] * up)
 
 
     def RerollShape(self, bag, current):
@@ -701,6 +722,10 @@ class InGame_UI:
     def ControlsLabel(self):
         posHeight = 215
         i = 0
+        pauseKey, clearKey = pygame.image.load(f"{UI_PATH}escape.jpg"), pygame.image.load(f"{UI_PATH}backspace.jpg")
+        pauseKey, clearKey = pygame.transform.smoothscale(pauseKey, (22, 22)), pygame.transform.smoothscale(clearKey, (52, 22))
+
+
         directionalKeysImage = [pygame.image.load(f"{UI_PATH}q.jpg"), pygame.image.load(f"{UI_PATH}w.jpg"), pygame.image.load(f"{UI_PATH}left.jpg"), pygame.image.load(f"{UI_PATH}right.png"), pygame.image.load(f"{UI_PATH}up.png"), pygame.image.load(f"{UI_PATH}down.png")]
         controlLabels = ["Rotate Left", "Rotate Right", "Move right", "Move left", "Drop", "Fast Fall (hold)"]
 
@@ -712,6 +737,12 @@ class InGame_UI:
 
             posHeight += 40
             i += 1
+
+        if self.playfield.GetPlayfieldMode() == "Training":
+            self.playfield.frame.blit(pauseKey, (8, 455))
+            self.playfield.frame.blit(clearKey, (8, 495))
+            widgets.TextLabel(self.playfield.frame, "Pause", 10, FONT_PATH, color=(255, 255, 255), posX=37, posY=455 + 5)
+            widgets.TextLabel(self.playfield.frame, "Clear Stack", 10, FONT_PATH, color=(255, 255, 255), posX=67, posY=495 + 5)
 
 
 
@@ -768,6 +799,7 @@ class InGame_UI:
 
         elif self.playfield.GetPlayfieldMode() == "100-Lines Rush":
             self.time.NewText(f"{self.playfield.DisplayClock()}")
+            self.nLinesClearedLab.NewText(f"To Clear")
             self.nLinesCleared.NewText(f"{170 - self.playfield.GetClearedLines()}")
 
         elif self.playfield.GetPlayfieldMode() == "Survival":
@@ -786,36 +818,41 @@ class InGame_UI:
 
         self.pauseArrowNav[self.pauseSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
 
-    def GameOverScreen(self, mode:str, time:str, bestScore:dict):
+    def GameOverScreen(self, time:str, bestScore:dict):
         rowOneMarathon, rowTwoMarathon = 30, 70
         rowOne, rowThree = 15, 85
+        mode = self.playfield.GetPlayfieldMode()
 
 
         if mode != "Marathon":
             widgets.TextLabel(self.gameOverWindowSurface, f"score", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=3)
             widgets.TextLabel(self.gameOverWindowSurface, f"lines", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=3)
             widgets.TextLabel(self.gameOverWindowSurface, f"time", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=3)
+
             widgets.TextLabel(self.gameOverWindowSurface, f"Overall Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
             widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=30)
-            widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=30)
-            widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=30)
-            widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
-            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=60)
-            
+
             if mode == "100-Lines Rush":
-                widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared'] - 70}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=60)
+                widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines() - 70}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=30)
             
             else:
-                widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=60)
+                widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=30)
             
-            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Time']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{time}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=30)
+
+            widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOne, posY=60)
+            widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=60)           
+            widgets.TextLabel(self.gameOverWindowSurface, self.__ConvertTimeScore(bestScore[mode]['Time']), 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowThree, posY=60)
         
         else:
             widgets.TextLabel(self.gameOverWindowSurface, f"score", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=3)
             widgets.TextLabel(self.gameOverWindowSurface, f"lines", 10, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=3)
+
             widgets.TextLabel(self.gameOverWindowSurface, f"Overall Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=15)
             widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetFullScore()}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=30)
             widgets.TextLabel(self.gameOverWindowSurface, f"{self.playfield.GetClearedLines() - 120}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=30)
+
             widgets.TextLabel(self.gameOverWindowSurface, f"Your Best Score", 20, FONT_PATH, color=(255, 255, 255), pourcentMode=True, centerX=True, posY=45)
             widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Score']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowOneMarathon, posY=60)
             widgets.TextLabel(self.gameOverWindowSurface, f"{bestScore[mode]['Lines Cleared']}", 18, FONT_PATH, color=(255, 255, 255), pourcentMode=True, posX=rowTwoMarathon, posY=60)
@@ -835,3 +872,13 @@ class InGame_UI:
         self.count += 1
         frameCenter = (self.centerX - (self.countdownImages[self.count].get_rect().width / 2), self.centerY - (self.countdownImages[self.count].get_rect().height / 2))
         return self.countdownImages[self.count], frameCenter
+    
+
+
+
+
+    def __ConvertTimeScore(self, time:int):
+        minutes, timeScore = divmod(time, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        return "%d:%02d:%02d" % (hours, minutes, timeScore)

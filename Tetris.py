@@ -2,7 +2,6 @@ import json
 import hashlib
 from const import *
 from tetrisObj import *
-from collections import OrderedDict
 
 
 
@@ -14,46 +13,47 @@ class ScoreManager:
         self.scene = scene
         self.centerX, self.centerY = self.scene.width / 2, self.scene.height / 2
         window = pygame.image.load(f"{UI_PATH}GameField-UI_PauseWindow.png")
-        self.focusedButton = pygame.image.load(f"{UI_PATH}Button2(focused).png")
-        self.modeFocused = pygame.image.load(f"{UI_PATH}Button1(focused).png")
+        self.__focusedButton = pygame.image.load(f"{UI_PATH}Button2(focused).png")
+        self.__modeFocused = pygame.image.load(f"{UI_PATH}Button1(focused).png")
 
-        self.playerList = list(self.__scoresData.keys())
+        self.__playerList = list(self.__scoresData.keys())
         self.currentPlayer = ""
-        self.passLab = ""
+        self.__passLab = ""
         self.__password = ""
         self.__playerScores = None
 
 
-        self.loginWindow = widgets.Frame(self.scene, (450, 350), (self.centerX - 200, self.centerY - 175), color=(1, 1, 1), surfImage=window)
+        self.__loginWindow = widgets.Frame(self.scene, (450, 350), (self.centerX - 200, self.centerY - 175), color=(1, 1, 1), surfImage=window)
 
-        self.windowLabel = widgets.TextLabel(self.loginWindow, "Login", 20, FONT_PATH, pourcentMode=True, centerX=True, posY=8, color=(0, 0, 0), bgColor=(1, 1, 1))
-        self.playerLabel = widgets.TextLabel(self.loginWindow, "Name: ", 16, FONT_PATH, pourcentMode=True, posX=25, posY=29, bgColor=(1, 1, 1))
-        self.passwordLabel = widgets.TextLabel(self.loginWindow, "Password: ", 16, FONT_PATH, pourcentMode=True, posX=25, posY=42, bgColor=(1, 1, 1))
-        self.loginAdd = widgets.GfxButton(self.loginWindow, 190, 40, pourcentMode=True, centerX=True, posY=67, type="OnClick", buttonLabel="Add player", labelSize=14, imageButton=f"{UI_PATH}Button2.png", func=self.__NewPlayer)
-        self.loginStart = widgets.GfxButton(self.loginWindow, 190, 40, pourcentMode=True, centerX=True, posY=82, type="OnClick", buttonLabel="Login", labelSize=14, imageButton=f"{UI_PATH}Button2.png", func=self.__Login)
-        self.loginMessage = widgets.TextLabel(self.loginWindow, "", 14, FONT_PATH, pourcentMode=True, centerX=True, posY=53, bgColor=(0, 0, 0))
+        self.__playerLabel = widgets.TextLabel(self.__loginWindow, "Name: ", 16, FONT_PATH, pourcentMode=True, posX=25, posY=29, bgColor=(1, 1, 1))
+        self.__passwordLabel = widgets.TextLabel(self.__loginWindow, "Password: ", 16, FONT_PATH, pourcentMode=True, posX=25, posY=42, bgColor=(1, 1, 1))
+        self.__loginAdd = widgets.GfxButton(self.__loginWindow, 190, 40, pourcentMode=True, centerX=True, posY=67, type="OnClick", buttonLabel="Add player", labelSize=14, imageButton=f"{UI_PATH}Button2.png", func=self.__NewPlayer)
+        self.__loginStart = widgets.GfxButton(self.__loginWindow, 190, 40, pourcentMode=True, centerX=True, posY=82, type="OnClick", buttonLabel="Login", labelSize=14, imageButton=f"{UI_PATH}Button2.png", func=self.__Login)
+        self.__loginMessage = widgets.TextLabel(self.__loginWindow, "", 14, FONT_PATH, pourcentMode=True, centerX=True, posY=53, bgColor=(0, 0, 0))
         
-        self.__nameInput = widgets.TextLabel(self.loginWindow, self.currentPlayer, 16, FONT_PATH, pourcentMode=True, posX=65, posY=29, bgColor=(0, 0, 0))
-        self.__passInput = widgets.TextLabel(self.loginWindow, self.passLab, 35, FONT_PATH, pourcentMode=True, posX=65, posY=42, bgColor=(0, 0, 0))
+        self.__nameInput = widgets.TextLabel(self.__loginWindow, self.currentPlayer, 16, FONT_PATH, pourcentMode=True, posX=65, posY=29, bgColor=(0, 0, 0))
+        self.__passInput = widgets.TextLabel(self.__loginWindow, self.__passLab, 35, FONT_PATH, pourcentMode=True, posX=65, posY=42, bgColor=(0, 0, 0))
     
-        self.loginEntries = [self.__nameInput, self.__passInput]
-        self.loginSelection = [self.playerLabel, self.passwordLabel, self.loginAdd, self.loginStart]
-        self.loginEntrySelector = 0
+        self.__loginEntries = [self.__nameInput, self.__passInput]
+        self.__loginSelection = [self.__playerLabel, self.__passwordLabel, self.__loginAdd, self.__loginStart]
+        self.__loginEntrySelector = 0
         self.__loginValidation = False
 
 
-        self.scoreBoardWindow = widgets.Frame(self.scene, (600, 400), (self.centerX - 300, self.centerY - 175), color=(1, 1, 1), surfImage=window)
-        self.scoreWindowSurface = widgets.Frame(self.scoreBoardWindow.surfImage, (525, 300))
+        self.__scoreBoardWindow = widgets.Frame(self.scene, (600, 400), (self.centerX - 300, self.centerY - 175), color=(1, 1, 1), surfImage=window)
 
-        self.scoreBoardClassic = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=13, posY=15, type="OnClick", buttonLabel="Classic", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
-        self.scoreBoardMarathon = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=37, posY=15, type="OnClick", buttonLabel="Marathon", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
-        self.scoreBoardRush = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=62, posY=15, type="OnClick", buttonLabel="100-Lines Rush", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
-        self.scoreBoardSurvival = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=87, posY=15, type="OnClick", buttonLabel="Survival", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
-        self.scoreWindowLabel = widgets.TextLabel(self.scoreBoardWindow, "Classic", 20, FONT_PATH, pourcentMode=True, centerX=True, posY=8, color=(0, 0, 0), bgColor=(86, 222, 187))
+        self.__scoreBoardClassic = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=13, posY=15, type="OnClick", buttonLabel="Classic", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
+        self.__scoreBoardMarathon = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=37, posY=15, type="OnClick", buttonLabel="Marathon", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
+        self.__scoreBoardRush = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=62, posY=15, type="OnClick", buttonLabel="100-Lines Rush", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
+        self.__scoreBoardSurvival = widgets.GfxButton(self.scene, 160, 40, pourcentMode=True, posX=87, posY=15, type="OnClick", buttonLabel="Survival", labelSize=14, imageButton=f"{UI_PATH}Button1.png")
+        self.__scoreWindowLabel = widgets.TextLabel(self.__scoreBoardWindow, "Classic", 20, FONT_PATH, pourcentMode=True, centerX=True, posY=8, color=(0, 0, 0), bgColor=(86, 222, 187))
 
-        self.scoreModeSelection = [self.scoreBoardClassic, self.scoreBoardMarathon, self.scoreBoardRush, self.scoreBoardSurvival]
-        self.scoreMode = ["Classic", "Marathon", "100-Lines Rush", "Survival"]
-        self.scoreSelector = 0
+        self.__scoreModeSelection = [self.__scoreBoardClassic, self.__scoreBoardMarathon, self.__scoreBoardRush, self.__scoreBoardSurvival]
+        self.__scoreMode = ["Classic", "Marathon", "100-Lines Rush", "Survival"]
+        self.__scoreSelector = 0
+
+        self.__forbiddenKeys = [pygame.K_CAPSLOCK, pygame.K_LSHIFT, pygame.K_RSHIFT, pygame.K_TAB, pygame.K_ESCAPE, pygame.K_LCTRL, pygame.K_RCTRL, pygame.K_LALT, pygame.K_RALT, pygame.K_MODE, pygame.K_LEFT, pygame.K_RIGHT, \
+                                pygame.K_F1, pygame.K_F2, pygame.K_F3, pygame.K_F4, pygame.K_F5, pygame.K_F6, pygame.K_F7, pygame.K_F8, pygame.K_F9, pygame.K_F10, pygame.K_F11, pygame.K_F12]
 
 
 
@@ -61,20 +61,23 @@ class ScoreManager:
 
     def DefineCurrentPlayer(self):
         global RUNNING, STATE
-        self.loginWindow.ActiveFrame()
 
-        for i in range(len(self.loginSelection)):
-            if isinstance(self.loginSelection[i], widgets.GfxButton):
-                self.loginSelection[i].ActiveButton()
+        self.__loginWindow.ActiveFrame()
+        widgets.TextLabel(self.__loginWindow, "Login", 20, FONT_PATH, pourcentMode=True, centerX=True, posY=8, color=(0, 0, 0), bgColor=(1, 1, 1))
 
-                if i == self.loginEntrySelector:
-                    self.loginSelection[i].ActiveButton(focused=True, focusedImage=self.focusedButton)
+
+        for i in range(len(self.__loginSelection)):
+            if isinstance(self.__loginSelection[i], widgets.GfxButton):
+                self.__loginSelection[i].ActiveButton()
+
+                if i == self.__loginEntrySelector:
+                    self.__loginSelection[i].ActiveButton(focused=True, focusedImage=self.__focusedButton)
 
             else:
-                self.loginSelection[i].NewText(self.loginSelection[i].text, color=(255, 255, 255))
+                self.__loginSelection[i].NewText(self.__loginSelection[i].text, color=(255, 255, 255))
 
-                if i == self.loginEntrySelector:
-                    self.loginSelection[i].NewText(self.loginSelection[i].text, color=(95, 250, 195))
+                if i == self.__loginEntrySelector:
+                    self.__loginSelection[i].NewText(self.__loginSelection[i].text, color=(95, 250, 195))
         
         
         for event in pygame.event.get():
@@ -82,65 +85,68 @@ class ScoreManager:
                 RUNNING = False
                 STATE = None
 
+
             if event.type == pygame.KEYDOWN:
+
 
                 if event.key == pygame.K_BACKSPACE:
                     pygame.mixer.Sound.play(SoundEffects["Key"])
 
-                    if self.loginEntrySelector != 1:
+                    if self.__loginEntrySelector != 1:
                         self.currentPlayer = self.currentPlayer[:-1]
                         self.__nameInput.NewText(self.currentPlayer)
+
                     else:
                         self.__password = self.__password[:-1]
-                        self.passLab = self.passLab[:-1]
-                        self.__passInput.NewText(self.passLab)
-
+                        self.__passLab = self.__passLab[:-1]
+                        self.__passInput.NewText(self.__passLab)
 
                 elif event.key == pygame.K_UP:
                     pygame.mixer.Sound.play(SoundEffects["Select"])
-                    self.loginEntrySelector -= 1
+                    self.__loginEntrySelector -= 1
 
                 elif event.key == pygame.K_DOWN:
                     pygame.mixer.Sound.play(SoundEffects["Select"])
-                    self.loginEntrySelector += 1
+                    self.__loginEntrySelector += 1
 
                 elif event.key == pygame.K_RETURN:
-                    if isinstance(self.loginSelection[self.loginEntrySelector], widgets.GfxButton):
-                        self.loginSelection[self.loginEntrySelector].Click(input=True)
+                    if isinstance(self.__loginSelection[self.__loginEntrySelector], widgets.GfxButton):
+                        self.__loginSelection[self.__loginEntrySelector].Click(input=True)
+
                     else:
-                        self.loginStart.Click(input=True)
+                        self.__loginStart.Click(input=True)
 
                     return self.__loginValidation
                     
-
-                elif self.loginEntrySelector < 2 and (event.key != pygame.K_RETURN or event.key != pygame.K_DOWN or event.key != pygame.K_UP):
+                elif self.__loginEntrySelector < 2 and (event.key not in self.__forbiddenKeys and event.key != pygame.K_RETURN and event.key != pygame.K_DOWN and event.key != pygame.K_UP):
                     pygame.mixer.Sound.play(SoundEffects["Key"])
-                    if self.loginEntrySelector != 1 and len(self.currentPlayer) < 10:
+                    if self.__loginEntrySelector != 1 and len(self.currentPlayer) < 10:
                         self.currentPlayer += event.unicode
                         self.__nameInput.NewText(self.currentPlayer)
-                    elif self.loginEntrySelector == 1 and len(self.passLab) < 15:
+
+                    elif self.__loginEntrySelector == 1 and len(self.__passLab) < 15:
                         self.__password += event.unicode
-                        self.passLab += "*"
-                        self.__passInput.NewText(self.passLab)
+                        self.__passLab += "*"
+                        self.__passInput.NewText(self.__passLab)
 
 
-        self.loginEntrySelector = max(min(self.loginEntrySelector, 3), 0)
+        self.__loginEntrySelector = max(min(self.__loginEntrySelector, 3), 0)
 
 
 
     def ScoreBoard(self):
         global RUNNING, STATE
-        self.scoreBoardWindow.ActiveFrame()
+        self.__scoreBoardWindow.ActiveFrame()
         widgets.TextLabel(self.scene, "ScoreBoard", 22, FONT_PATH, pourcentMode=True, centerX=True, posY=6, color=(255, 255, 255), bgColor=(1, 1, 1))
-        self.__ScoreBoardData(self.scoreMode[self.scoreSelector])
+        self.__ScoreBoardData(self.__scoreMode[self.__scoreSelector])
 
 
-        for i in range(len(self.loginSelection)):
-            self.scoreModeSelection[i].ActiveButton()
-            self.scoreWindowLabel.NewText(self.scoreMode[self.scoreSelector])
+        for i in range(len(self.__loginSelection)):
+            self.__scoreModeSelection[i].ActiveButton()
+            self.__scoreWindowLabel.NewText(self.__scoreMode[self.__scoreSelector])
 
-            if i == self.scoreSelector:
-                self.scoreModeSelection[i].ActiveButton(focused=True, focusedImage=self.modeFocused)
+            if i == self.__scoreSelector:
+                self.__scoreModeSelection[i].ActiveButton(focused=True, focusedImage=self.__modeFocused)
 
 
         for event in pygame.event.get():
@@ -148,35 +154,36 @@ class ScoreManager:
                 RUNNING = False
                 STATE = None
 
+
             if event.type == pygame.KEYDOWN:
 
                 if event.key == pygame.K_LEFT:
                     pygame.mixer.Sound.play(SoundEffects["Select"])
-                    self.scoreBoardWindow.blit(self.scoreBoardWindow.surfImage, (0, 0))
-                    self.scoreSelector -= 1
+                    self.__scoreBoardWindow.blit(self.__scoreBoardWindow.surfImage, (0, 0))
+                    self.__scoreSelector -= 1
 
                 elif event.key == pygame.K_RIGHT:
                     pygame.mixer.Sound.play(SoundEffects["Select"])
-                    self.scoreBoardWindow.blit(self.scoreBoardWindow.surfImage, (0, 0))
-                    self.scoreSelector += 1
+                    self.__scoreBoardWindow.blit(self.__scoreBoardWindow.surfImage, (0, 0))
+                    self.__scoreSelector += 1
 
                 elif event.key == pygame.K_RETURN:
                     return None
 
                 elif event.key == pygame.K_BACKSPACE:
-                    self.scoreSelector = 0
+                    self.__scoreSelector = 0
                     pygame.mixer.Sound.play(SoundEffects["Return"])
-                    self.scoreBoardWindow.blit(self.scoreBoardWindow.surfImage, (0, 0))
+                    self.__scoreBoardWindow.blit(self.__scoreBoardWindow.surfImage, (0, 0))
                     return False
 
-        self.scoreSelector = max(min(self.scoreSelector, 3), 0)
+        self.__scoreSelector = max(min(self.__scoreSelector, 3), 0)
         return True
 
 
 
     def UserClear(self):
         self.currentPlayer = ""
-        self.passLab = ""
+        self.__passLab = ""
         self.__password = ""
         self.__loginValidation = False
         self.__playerScores = None
@@ -184,11 +191,11 @@ class ScoreManager:
         self.entriesData = [self.currentPlayer, self.__password]
 
 
-        for i in range(len(self.loginEntries)):
-            self.loginEntries[i].NewText(self.entriesData[i])
+        for i in range(len(self.__loginEntries)):
+            self.__loginEntries[i].NewText(self.entriesData[i])
 
-        self.loginMessage.NewText("", color=(255, 255, 255))
-        self.loginEntrySelector = 0
+        self.__loginMessage.NewText("", color=(255, 255, 255))
+        self.__loginEntrySelector = 0
 
 
 
@@ -198,29 +205,24 @@ class ScoreManager:
 
 
         if mode != "Marathon":
-            currentHours, currentMinutes, currentSec = self.__playerScores[mode]["Time"].split(":")
-            currentBestTime = (int(currentHours) * 3600) + (int(currentMinutes) * 60) + int(currentSec)
 
             if newScore >= self.__playerScores[mode]["Score"]:
                 self.__playerScores[mode]["Score"] = newScore
                 self.__playerScores[mode]["Lines Cleared"] = newLines
-                self.__playerScores[mode]["Time"] = newTime
+                self.__playerScores[mode]["Time"] = timeScore
         
         elif mode == "100-Lines Rush":
-            currentHours, currentMinutes, currentSec = self.__playerScores[mode]["Time"].split(":")
-            currentBestTime = (int(currentHours) * 3600) + (int(currentMinutes) * 60) + int(currentSec)
 
-            if newScore >= self.__playerScores[mode]["Score"]:
+            if newLines - 70 >= self.__playerScores[mode]["Lines Cleared"] and timeScore < self.__playerScores[mode]["Time"]:
                 self.__playerScores[mode]["Score"] = newScore
                 self.__playerScores[mode]["Lines Cleared"] = newLines - 70
-                self.__playerScores[mode]["Time"] = newTime
+                self.__playerScores[mode]["Time"] = timeScore
 
         else:
-            newLines -= 120
 
             if newScore >= self.__playerScores[mode]["Score"]:
                 self.__playerScores[mode]["Score"] = newScore
-                self.__playerScores[mode]["Lines Cleared"] = newLines
+                self.__playerScores[mode]["Lines Cleared"] = newLines - 120
 
         self.__scoresData[self.currentPlayer].update(self.__playerScores)
         self.__UpdateJSON()
@@ -237,25 +239,29 @@ class ScoreManager:
     def __NewPlayer(self):
         formatName = self.currentPlayer.lower()
 
+
         if self.__password == "":
-            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        elif " " in self.currentPlayer or "\t" in self.currentPlayer or self.currentPlayer == "":
-            self.loginMessage.NewText("'  ' are not allowed", color=(160, 50, 50))
-            pygame.mixer.Sound.play(SoundEffects["Message"])
-            return None
-        elif formatName in self.playerList:
-            self.loginMessage.NewText("We already know you", color=(255, 255, 255))
+            self.__loginMessage.NewText("Please enter a password", color=(160, 50, 50))
             pygame.mixer.Sound.play(SoundEffects["Message"])
             return None
         
+        elif " " in self.currentPlayer or self.currentPlayer == "":
+            self.__loginMessage.NewText("Invalid username", color=(160, 50, 50))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        
+        elif formatName in self.__playerList:
+            self.__loginMessage.NewText("We already know you", color=(255, 255, 255))
+            pygame.mixer.Sound.play(SoundEffects["Message"])
+            return None
+        
+
         password = hashlib.sha256(self.__password.encode()).hexdigest()
 
         self.__scoresData.update({formatName:{
             "Classic":{
                 "Score":0, 
-                "Time":"00:00:00", 
+                "Time":0, 
                 "Lines Cleared":0
             },
             "Marathon":{
@@ -265,45 +271,49 @@ class ScoreManager:
             "100-Lines Rush":{
                 "Score":0,
                 "Lines Cleared": 0,
-                "Time":"00:00:00"
+                "Time":0
             },
             "Survival":{
                 "Score":0,
-                "Time":"00:00:00",
+                "Time":0,
                 "Lines Cleared":0
             },
             "Password":password
         }})
 
         self.__UpdateJSON()
-        self.playerList = list(self.__scoresData.keys())
+        self.__playerList = list(self.__scoresData.keys())
 
-        self.loginMessage.NewText("You've been added, now log in !", color=(20, 130, 20))
+        self.__loginMessage.NewText("You've been added, now log in !", color=(20, 130, 20))
         pygame.mixer.Sound.play(SoundEffects["Confirm"])
 
     
 
     def __Login(self):
         if self.__password == "":
-            self.loginMessage.NewText("Please enter a password", color=(160, 50, 50))
+            self.__loginMessage.NewText("Please enter a password", color=(160, 50, 50))
             pygame.mixer.Sound.play(SoundEffects["Message"])
             return None
 
         password = hashlib.sha256(self.__password.encode()).hexdigest()
         formatName = self.currentPlayer.lower()
 
-        if formatName not in self.playerList:
-            self.loginMessage.NewText("New user ? Add yourself !", color=(255, 255, 255))
+        if formatName not in self.__playerList:
+            self.__loginMessage.NewText("New user ? Add yourself !", color=(255, 255, 255))
             pygame.mixer.Sound.play(SoundEffects["Message"])
             return None
-        elif formatName in self.playerList and password != self.__scoresData[formatName]["Password"]:
-            self.loginMessage.NewText("Wrong password", color=(130, 20, 20))
+        
+        elif formatName in self.__playerList and password != self.__scoresData[formatName]["Password"]:
+            self.__loginMessage.NewText("Wrong password", color=(130, 20, 20))
             pygame.mixer.Sound.play(SoundEffects["Message"])
             return None
+        
         else:
             self.__playerScores = self.__scoresData[formatName]
             pygame.mixer.Sound.play(SoundEffects["Confirm"])
             self.__loginValidation = True
+
+
 
     def __UpdateJSON(self):
         with open("Scores.json", "w") as playersScoreData:
@@ -311,20 +321,28 @@ class ScoreManager:
 
 
 
+    def __ConvertTimeScore(self, time:int):
+        minutes, timeScore = divmod(time, 60)
+        hours, minutes = divmod(minutes, 60)
+
+        return "%d:%02d:%02d" % (hours, minutes, timeScore)
+
+
+
     def __SortingScoreData(self, mode:str):
+        if mode == "100-Lines Rush":
+            sortedScores = sorted(self.__scoresData, key=lambda x: (-self.__scoresData[x][mode]["Lines Cleared"], self.__scoresData[x][mode]["Time"]))
 
-        orderDict = OrderedDict()
-        sortedScores = sorted(self.__scoresData, key=lambda x: self.__scoresData[x][mode]["Score"], reverse=True)
+        else:
+            sortedScores = sorted(self.__scoresData, key=lambda x: self.__scoresData[x][mode]["Score"], reverse=True)
 
-        for key in sortedScores:
-            orderDict[key] = self.__scoresData[key]
 
         return sortedScores
 
 
 
     def __ScoreBoardData(self, scoreMode:str):
-        self.scoreBoardWindow.ActiveFrame()
+        self.__scoreBoardWindow.ActiveFrame()
         rankColumn, nameColumn = 10, 27
         labelRow = 30
         scoreColumn = [45, 65, 85]
@@ -333,35 +351,42 @@ class ScoreManager:
         
         sortedNames = self.__SortingScoreData(scoreMode)
 
+        widgets.TextLabel(self.__scoreBoardWindow, "no.", 18, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
+        widgets.TextLabel(self.__scoreBoardWindow, "Name", 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
 
-        widgets.TextLabel(self.scoreBoardWindow, "no.", 18, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
-        widgets.TextLabel(self.scoreBoardWindow, "Name", 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=labelRow, color=(255, 255, 255), bgColor=(1, 1, 1))
 
         for i in range(3):
-            widgets.TextLabel(self.scoreBoardWindow, labels[i], 13, FONT_PATH, pourcentMode=True, posX=scoreColumn[i], posY=labelRow, color=(255, 255, 255), bgColor=(0, 0, 0))
-            widgets.TextLabel(self.scoreBoardWindow, str(i + 1), 22, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.__scoreBoardWindow, labels[i], 13, FONT_PATH, pourcentMode=True, posX=scoreColumn[i], posY=labelRow, color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.__scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+            widgets.TextLabel(self.__scoreBoardWindow, "---", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))            
+            
+            
+            if self.__scoresData[sortedNames[i]][scoreMode]["Score"] == 0 and self.__scoresData[sortedNames[i]][scoreMode]["Score"] == 0 and self.__scoresData[sortedNames[i]][scoreMode]["Score"] == 0:
+                widgets.TextLabel(self.__scoreBoardWindow, "---", 22, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
 
-            widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[0], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
-            widgets.TextLabel(self.scoreBoardWindow, "---", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))            
+            else:
+                widgets.TextLabel(self.__scoreBoardWindow, str(i + 1), 22, FONT_PATH, pourcentMode=True, posX=rankColumn, posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
 
 
             if self.currentPlayer == sortedNames[i]:
-                widgets.TextLabel(self.scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(86, 222, 187), bgColor=(0, 0, 0))
+                widgets.TextLabel(self.__scoreBoardWindow, sortedNames[i], 15, FONT_PATH, pourcentMode=True, posX=nameColumn, posY=rankRows[i], color=(86, 222, 187), bgColor=(0, 0, 0))
 
 
             if scoreMode != "Marathon":
-                widgets.TextLabel(self.scoreBoardWindow, self.__scoresData[sortedNames[i]][scoreMode]["Time"], 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+                widgets.TextLabel(self.__scoreBoardWindow, self.__ConvertTimeScore(self.__scoresData[sortedNames[i]][scoreMode]["Time"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[2], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
 
 
             if scoreMode == "100-Lines Rush":
-                rushLinesLab = widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+                widgets.TextLabel(self.__scoreBoardWindow, "---", 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[0], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+                rushLinesLab = widgets.TextLabel(self.__scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
             
                 if self.__scoresData[sortedNames[i]][scoreMode]['Lines Cleared'] == 100:
                     rushLinesLab.NewText(f"{self.__scoresData[sortedNames[i]][scoreMode]['Lines Cleared']}", color=(235, 175, 30))
 
             else:
-                widgets.TextLabel(self.scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+                widgets.TextLabel(self.__scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Score"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[0], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+                widgets.TextLabel(self.__scoreBoardWindow, str(self.__scoresData[sortedNames[i]][scoreMode]["Lines Cleared"]), 15, FONT_PATH, pourcentMode=True, posX=scoreColumn[1], posY=rankRows[i], color=(255, 255, 255), bgColor=(0, 0, 0))
+
 
         pygame.display.update()
 
@@ -385,16 +410,19 @@ class Game:
         self.__mode = mode
         self.__restart = False
 
+
         self.playfield = PlayField(self.scene, (PLAYFIELD_CELL_SIZE, PLAYFIELD_CELL_SIZE), 173, 50, PLAYFIELD_COLUMNS, PLAYFIELD_ROWS, mode=self.__mode, border=True, borderWidth=9, borderColor=(95, 250, 195))
         self.tetromino = Tetromino(self.playfield)
         self.nextTetromino = Tetromino(self.playfield)
         self.GameUI = InGame_UI(self.scene, self.playfield)
+
 
         self.clock = pygame.time.Clock()
         CLOCK = pygame.time.get_ticks()
 
         self.sec = 0
         self.speed = TIME_INTERVAL
+
 
         self.GameUI.UpdateNextWindow(self.nextTetromino.shape)
         self.tetrominoBag = []
@@ -411,20 +439,28 @@ class Game:
             self.__StartupCountdown()
             CLOCK = pygame.time.get_ticks()
 
+
         if self.__mode == "Marathon":
             TIME_INTERVAL -= 675
             pygame.mixer.music.load(InGameMusic["PlayFieldLvl25"])
             pygame.mixer.music.set_volume(0.3)
+
         elif self.__mode == "100-Lines Rush":
             TIME_INTERVAL -= 375
             pygame.mixer.music.load(InGameMusic["PlayField"])
             pygame.mixer.music.set_volume(0.2)
+
         else:
             TIME_INTERVAL = 1000
             pygame.mixer.music.load(InGameMusic["PlayField"])
             pygame.mixer.music.set_volume(0.2)
 
         pygame.mixer.music.play(-1)
+
+
+
+
+
 
     def GameLoop(self):
         global CLOCK, RUNNING, TIME_INTERVAL, STATE
@@ -441,6 +477,12 @@ class Game:
 
             self.__InGameControls(event)
         
+
+        #print(self.playfield.addFlag)
+        if self.__mode == "Survival" and self.playfield.addFlag:
+            self.tetromino.TetrominoUp(self.playfield.GetAddedLines())
+            self.playfield.addFlag = False
+
 
         self.GameUI.UpdateStatusWindow(self.scoreManager.GetPlayerScores())
         self.playfield.DrawStack()
@@ -464,6 +506,7 @@ class Game:
 
                 TIME_INTERVAL = max(30, TIME_INTERVAL)
 
+
             if self.playfield.CheckLoss():
                 TIME_INTERVAL = 1000
                 self.tetroHold = None
@@ -472,7 +515,7 @@ class Game:
                     self.GameUI.UpdateHoldWindow()
                     self.__Clear()
                 else:
-                    self.tetromino.TetroKill()
+                    #self.tetromino.TetroKill()
                     self.playfield.DrawStack()
                     self.__GameOver()
 
@@ -483,8 +526,8 @@ class Game:
             self.playfield.DrawStack()
             self.__GameOver()
 
-        elif self.__mode == "100-Lines Rush" and (175 - self.playfield.GetClearedLines()) <= 0:
-            self.tetromino.TetroKill()
+        elif self.__mode == "100-Lines Rush" and (170 - self.playfield.GetClearedLines()) <= 0:
+            #self.tetromino.TetroKill()
             self.playfield.DrawStack()
             self.__GameOver()
         
@@ -509,16 +552,20 @@ class Game:
         global STATE, MENUSTATE, PAUSE
         PAUSE, STATE, MENUSTATE = False, "Menu", "Game Modes"
 
+
+
     def __StartupCountdown(self):
         start = pygame.time.get_ticks()
         startTimer = 0
         pygame.mixer.Sound.play(SoundEffects["Ready"])
+
 
         while pygame.time.get_ticks() < start + 5000:
             startTimer = pygame.time.get_ticks() - start
 
             if pygame.time.get_ticks() >= start + 4000:
                 pygame.mixer.Sound.play(SoundEffects["Go"])
+
             else:
                 pygame.mixer.Sound.play(SoundEffects["Count"])
 
@@ -534,6 +581,8 @@ class Game:
 
         self.playfield.start += startTimer
 
+
+
     def __Clear(self):
         global PAUSE, CLOCK
         self.__NewTetromino()
@@ -547,15 +596,20 @@ class Game:
         PAUSE = False
         pygame.mixer.Sound.play(SoundEffects["Clear"])
 
+
+
     def __WillRestart(self):
         self.__restart = True
         self.playfield.ClearStatus()
         self.playfield.ClearStack()
 
+
+
     def __NewTetromino(self):
 
         if len(self.tetrominoBag) >= (len(list(Tetrominoes.keys())) * 2) - 3:
             self.tetrominoBag = []
+
 
         self.tetrominoBag.append(self.tetromino.shape)
         self.tetromino = self.nextTetromino
@@ -563,6 +617,8 @@ class Game:
 
         self.nextTetromino.RerollShape(self.tetrominoBag, self.tetromino.shape)
         self.GameUI.UpdateNextWindow(self.nextTetromino.shape)
+
+
 
     def __GamePause(self):
         global CLOCK, RUNNING, STATE
@@ -575,6 +631,8 @@ class Game:
         while pause:
 
             pauseTimer = int(pygame.time.get_ticks() - pauseStart)
+
+
             for event in pygame.event.get():
 
                 if event.type == pygame.QUIT:
@@ -582,7 +640,9 @@ class Game:
                     STATE = None
                     pause = False
 
+
                 if event.type == pygame.KEYDOWN:
+
                     if event.key == pygame.K_ESCAPE:
 
                         pygame.mixer.music.unpause()
@@ -591,43 +651,53 @@ class Game:
                         CLOCK = pygame.time.get_ticks()
                         pause = False
 
+
                     if event.key == pygame.K_UP:
                         self.GameUI.pauseSelector -= 1
                         self.GameUI.pauseSelector = (self.GameUI.pauseSelector % len(self.GameUI.pauseArrowNav))
                         pygame.mixer.Sound.play(SoundEffects["Select"])
+
 
                     if event.key == pygame.K_DOWN:
                         self.GameUI.pauseSelector += 1
                         self.GameUI.pauseSelector = (self.GameUI.pauseSelector % len(self.GameUI.pauseArrowNav))
                         pygame.mixer.Sound.play(SoundEffects["Select"])
 
+
                     if event.key == pygame.K_RETURN:
                         pause = False
                         self.GameUI.pauseArrowNav[self.GameUI.pauseSelector].Click(input=True)
                         pygame.mixer.Sound.play(SoundEffects["Confirm"])
             
+
             self.GameUI.PauseScreen()
             self.scene.ActiveFrame()
             pygame.display.update()
+
+
 
     def __GameOver(self):
         global RUNNING, STATE
         gameOver = True
         timeSpent = self.playfield.DisplayClock()
+
         pygame.mixer.Sound.play(SoundEffects["GameOver"])
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
         pygame.time.wait(5000)
 
         self.scoreManager.SaveScore(self.__mode, self.playfield.GetClearedLines(), timeSpent, self.playfield.GetFullScore())
+
         pygame.mixer.Sound.play(SoundEffects["Save"])
         pygame.mixer.music.load(InGameMusic["Results"])
         pygame.mixer.music.set_volume(0.3)
         pygame.mixer.music.play(-1)
 
+
         while gameOver:
             self.GameUI.gameOverArrowNav[0].Command(self.__ChangeGameState)
             self.GameUI.gameOverArrowNav[1].Command(self.__WillRestart)
+
 
             for event in pygame.event.get():
 
@@ -635,6 +705,7 @@ class Game:
                     RUNNING = False
                     STATE = None
                     gameOver = False
+
 
                 if event.type == pygame.KEYDOWN:
 
@@ -653,9 +724,12 @@ class Game:
                         self.GameUI.gameOverArrowNav[self.GameUI.gameOverSelector].Click(input=True)
                         pygame.mixer.Sound.play(SoundEffects["Confirm"])
 
-            self.GameUI.GameOverScreen(self.__mode, timeSpent, self.scoreManager.GetPlayerScores())
+
+            self.GameUI.GameOverScreen(timeSpent, self.scoreManager.GetPlayerScores())
             self.scene.ActiveFrame()
             pygame.display.update()
+
+
 
     def __InGameControls(self, event):
 
@@ -681,6 +755,7 @@ class Game:
                     self.GameUI.UpdateHoldWindow(self.tetroHold.shape)
                     pygame.mixer.Sound.play(SoundEffects["Hold"])
 
+
             if event.key == pygame.K_ESCAPE and self.__mode == "Training":
                 pygame.mixer.music.pause()
                 pygame.mixer.Sound.play(SoundEffects["Pause"])
@@ -689,8 +764,10 @@ class Game:
             if event.key == pygame.K_BACKSPACE and self.__mode == "Training":
                 self.__Clear()
 
+
         if keys[pygame.K_DOWN] and not self.tetromino.get_TouchedGround():
             self.speed = FAST_TIME_INTERVAL
+
         else:
             self.speed = TIME_INTERVAL
 
@@ -717,12 +794,22 @@ class Menu:
         self.focusedButton = pygame.image.load(f"{UI_PATH}Button2(focused).png")
         self.focusedButton = pygame.transform.smoothscale(self.focusedButton, (320, 80))
 
-        self.__simultaneousFallingPiece = random.randint(15, 25)
+
+        self.__simultaneousFallingPiece = random.randint(12, 17)
+        self.__nStarFall = random.randint(80, 90)
+        self.__starSprites = [pygame.image.load(f"{IMAGE_PATH}star1.png"), pygame.image.load(f"{IMAGE_PATH}star2.png")]
         self.__fall = 0
-        self.__rndLeftPosition = []
-        self.__rndTopPosition = []
-        self.__rndSpeed = []
+
+        self.__rndTetroLeftPosition = []
+        self.__rndTetroTopPosition = []
+        self.__rndTetroSpeed = []
         self.__fallingPieces = []
+
+        self.__rndStarLeftPosition = []
+        self.__rndStarTopPosition = []
+        self.__rndStarSpeed = []
+        self.__fallingStar = []
+
         self.__RandomGeneration()
         
 
@@ -748,6 +835,7 @@ class Menu:
         pygame.mixer.music.stop()
         pygame.mixer.music.unload()
         
+
         if self.menuState != "Login":
             pygame.mixer.music.load(InGameMusic["Menu"])
             pygame.mixer.music.set_volume(0.35)
@@ -778,7 +866,7 @@ class Menu:
             self.__ScoreMenu()
 
         elif self.menuState == "Credits":
-            self.__MenuControls()
+            self.__Credits()
 
 
         pygame.display.update()
@@ -794,24 +882,39 @@ class Menu:
 
 
     def __BackgroundAnimation(self):
-        i = 0
+        i, j = 0, 0
         self.scene.blit(self.scene.surfImage, (0, 0))
 
-        while i < self.__simultaneousFallingPiece:
-            self.__rndTopPosition[i] += self.__rndSpeed[i]
-            self.scene.blit(self.__fallingPieces[i], (self.__rndLeftPosition[i], self.__rndTopPosition[i]))
+        while j < self.__nStarFall:
+            self.__rndStarTopPosition[j] += self.__rndStarSpeed[j]
+            self.__rndStarLeftPosition[j] += random.randint(-1, 1)
+
+            self.scene.blit(self.__fallingStar[j], (self.__rndStarLeftPosition[j], self.__rndStarTopPosition[j]))
             
-            rndOneActiveRotation = random.randint(100, 600)
-            rndTwoActiveRotation = random.randint(100, 600)
-            rndThreeActiveRotation = random.randint(100, 600)
 
-            if self.__rndTopPosition[i] == rndOneActiveRotation or self.__rndTopPosition[i] == rndTwoActiveRotation or self.__rndTopPosition[i] == rndThreeActiveRotation:
-                self.__fallingPieces[i] = pygame.transform.rotate(self.__fallingPieces[i], random.choice([90, 270]))
-        
-            if self.__rndTopPosition[i] >= 720:
-                self.__RandomPieceGeneration(i)
+            if self.__rndStarTopPosition[j] >= 720:
+                self.__RandomStarDataGeneration(j)
 
-            i += 1
+            
+            if i < self.__simultaneousFallingPiece:
+                self.__rndTetroTopPosition[i] += self.__rndTetroSpeed[i]
+                self.scene.blit(self.__fallingPieces[i], (self.__rndTetroLeftPosition[i], self.__rndTetroTopPosition[i]))
+
+                rndOneActiveRotation = random.randint(100, 600)
+                rndTwoActiveRotation = random.randint(100, 600)
+                #rndThreeActiveRotation = random.randint(100, 600)
+
+                if self.__rndTetroTopPosition[i] == rndOneActiveRotation or self.__rndTetroTopPosition[i] == rndTwoActiveRotation:
+                    self.__fallingPieces[i] = pygame.transform.rotate(self.__fallingPieces[i], random.choice([90, 270]))
+            
+
+                if self.__rndTetroTopPosition[i] >= 720:
+                    self.__RandomPieceGeneration(i)
+
+                i += 1
+
+
+            j += 1
 
 
 
@@ -829,34 +932,75 @@ class Menu:
         self.__fallingPieces[index] = pygame.transform.smoothscale(self.__fallingPieces[index], (rndWidth, rndHeight))
         self.__fallingPieces[index] = pygame.transform.rotate(self.__fallingPieces[index], rndRotation)
 
-        self.__rndSpeed[index] = rndSpeed
-        self.__rndLeftPosition[index] = rndX
-        self.__rndTopPosition[index] = rndY
+        self.__rndTetroSpeed[index] = rndSpeed
+        self.__rndTetroLeftPosition[index] = rndX
+        self.__rndTetroTopPosition[index] = rndY
+
+
+
+    def __RandomStarDataGeneration(self, index):
+        star = random.choice(self.__starSprites)
+
+        rndRotation = random.randint(0, 180)
+        rndSpeed = random.randint(3, 5)
+        rndX = random.randint(0, DISPLAY_W)
+        rndY = random.randint(-1000, 0)
+
+        rndWidth, rndHeight = random.randint(5, 25), random.randint(5, 15)
+        star = pygame.transform.smoothscale(star, (rndWidth, rndHeight))
+        star = pygame.transform.rotate(star, rndRotation)
+
+        self.__rndStarSpeed[index] = rndSpeed
+        self.__rndStarLeftPosition[index] = rndX
+        self.__rndStarTopPosition[index] = rndY
+        self.__fallingStar[index] = star
 
 
 
     def __RandomGeneration(self):
-        i = 0
-        while i < self.__simultaneousFallingPiece:
-            pieceShape = random.choice(list(Tetrominoes.keys()))
-            piece = pygame.image.load(f"{TILE_PATH}{pieceShape}-Shape.png")
+        i, j = 0, 0
 
-            rndRotation = random.choice([0, 90, 180, 270])
-            rndSide = random.choice([200, 650])
-            rndSpeed = random.randint(1, 3)
-            rndX = random.randint((rndSide - 200), rndSide)
+        while j < self.__nStarFall:
+
+            if i < self.__simultaneousFallingPiece:
+                pieceShape = random.choice(list(Tetrominoes.keys()))
+                piece = pygame.image.load(f"{TILE_PATH}{pieceShape}-Shape.png")
+
+                rndRotation = random.choice([0, 90, 180, 270])
+                rndSide = random.choice([200, 650])
+                rndSpeed = random.randint(1, 3)
+                rndX = random.randint((rndSide - 200), rndSide)
+                rndY = random.randint(-1000, 0)
+
+                rndWidth, rndHeight = random.randint(70, 85), random.randint(90, 115)
+                piece = pygame.transform.smoothscale(piece, (rndWidth, rndHeight))
+                piece = pygame.transform.rotate(piece, rndRotation)
+
+                self.__fallingPieces.append(piece)
+                self.__rndTetroLeftPosition.append(rndX)
+                self.__rndTetroTopPosition.append(rndY)
+                self.__rndTetroSpeed.append(rndSpeed)
+
+                i += 1
+
+
+            star = random.choice(self.__starSprites)
+
+            rndRotation = random.randint(0, 180)
+            rndSpeed = random.randint(3, 5)
+            rndX = random.randint(0, DISPLAY_W)
             rndY = random.randint(-1000, 0)
 
-            rndWidth, rndHeight = random.randint(70, 85), random.randint(90, 115)
-            piece = pygame.transform.smoothscale(piece, (rndWidth, rndHeight))
-            piece = pygame.transform.rotate(piece, rndRotation)
+            rndWidth, rndHeight = random.randint(5, 25), random.randint(5, 25)
+            star = pygame.transform.smoothscale(star, (rndWidth, rndHeight))
+            star = pygame.transform.rotate(star, rndRotation)
 
-            self.__fallingPieces.append(piece)
-            self.__rndLeftPosition.append(rndX)
-            self.__rndTopPosition.append(rndY)
-            self.__rndSpeed.append(rndSpeed)
+            self.__fallingStar.append(star)
+            self.__rndStarLeftPosition.append(rndX)
+            self.__rndStarTopPosition.append(rndY)
+            self.__rndStarSpeed.append(rndSpeed)
 
-            i += 1
+            j += 1
 
 
 
@@ -937,12 +1081,6 @@ class Menu:
 
 
 
-    def __ScoreMenu(self):
-        if not self.scoreManager.ScoreBoard():
-            self.__ChangeMenuState("Main Menu")
-
-
-
     def __GameMenu(self):
         self.currentMenu = self.gameMenuArrowNav
 
@@ -951,6 +1089,21 @@ class Menu:
 
         self.currentMenu[self.arrowSelector].ActiveButton(focused=True, focusedImage=self.focusedButton)
         self.__MenuControls()
+
+
+
+    def __ScoreMenu(self):
+        if not self.scoreManager.ScoreBoard():
+            self.__ChangeMenuState("Main Menu")
+
+
+
+    def __Credits(self):
+        self.__MenuControls()
+        #self.__CreditsBackGround() 
+
+
+
 
 
 
