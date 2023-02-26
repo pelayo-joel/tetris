@@ -117,8 +117,8 @@ Tetris 69 includes 4 differents modes being; Classic, Marathon, Rush and Surviva
 
 ### <p align="center">**Conclusion**</p>
 ---
-<p align="center">This was a very fun project to realise, wanting to be a game developer the realisation of these types of projects definitely helps in understanding more about how games are working underneath the hood especially with a barebone game module being Pygame.</p>
-<p align="center">If you also want to be a game developer, i suggest that you realise a similar project to learn more about gamedev. Also, feel free to use this project however you like for your own projects.</p>
+<p align="center">This was a very fun project to realize, wanting to be a game developer the realization of these types of projects definitely helps in understanding more about how games are working underneath the hood especially with a barebone game module being Pygame.</p>
+<p align="center">If you also want to be a game developer, i suggest that you realize a similar project to learn more about gamedev. Also, feel free to use this project however you like for your own projects.</p>
 <br></br>
 
 
