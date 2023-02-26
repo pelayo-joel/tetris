@@ -367,7 +367,7 @@ class Tetromino:
     """Public methods"""
     
 
-    def TetrominoUpdate(self, newTile):
+    def __TetrominoUpdate(self, newTile):
         for i in range(4):
             self.__tiles[i].pos = newTile[i]
             self.__tiles[i].TileUpdate()
@@ -520,6 +520,8 @@ class Tetromino:
         
         return TetrominoShape
     
+
+
     #Kicks the tetromino if basic rotation is invalid according to SRS standard
     def __WallKickTesting(self, orientation:str):
         kickSet = "CommonKick"
@@ -537,7 +539,7 @@ class Tetromino:
                 
                 if not self.__Colliding(testKick):
                     pygame.mixer.Sound.play(SoundEffects["Rotate"])
-                    self.TetrominoUpdate(testKick)
+                    self.__TetrominoUpdate(testKick)
                     self.wallKicked = True
 
                     if self.wallKicked:
@@ -555,13 +557,15 @@ class Tetromino:
                 
                 if not self.__Colliding(testKick):
                     pygame.mixer.Sound.play(SoundEffects["Rotate"])
-                    self.TetrominoUpdate(testKick)
+                    self.__TetrominoUpdate(testKick)
                     self.wallKicked = True
 
                     if self.wallKicked:
                         self.playfield.multiplierTSpin += 0.5
 
                     break
+
+
 
     #Defines the Tetromino movement
     def __Move(self, direction:pygame.Vector2):
@@ -572,13 +576,17 @@ class Tetromino:
 
 
         if not self.__Colliding(nextPos):
-            self.TetrominoUpdate(nextPos)
+            self.__TetrominoUpdate(nextPos)
 
         elif direction == DIRECTIONS['down']:
             self.__touchedGround = True
-            self.playfield.GridUpdate()
-            self.__tileSpriteGroup.update()
-            self.__tileSpriteGroup.draw(self.playfield.gridSurf)
+        
+            
+        self.playfield.GridUpdate()
+        self.__tileSpriteGroup.update()
+        self.__tileSpriteGroup.draw(self.playfield.gridSurf)
+
+
 
     #Rotates the tetromino in clockwise or counterclockwise rotation
     def __Rotate(self, clockOrientation):
@@ -590,7 +598,7 @@ class Tetromino:
 
         if not self.__Colliding(nextPos):
             pygame.mixer.Sound.play(SoundEffects["Rotate"])
-            self.TetrominoUpdate(nextPos)
+            self.__TetrominoUpdate(nextPos)
             self.wallKicked = False
             self.playfield.multiplierTSpin = 1.0
             
@@ -605,9 +613,15 @@ class Tetromino:
 
         elif clockOrientation == "CounterClockwise":
             self.__WallKickTesting(clockOrientation)
-            
+        
+        
+        self.playfield.GridUpdate()
+        self.__tileSpriteGroup.update()
+        self.__tileSpriteGroup.draw(self.playfield.gridSurf)
 
         self.rOrientation = RotationState[(self.rStateSelector % len(RotationState))]
+
+
 
     def __Drop(self):
         self.__lockDelay = 0
@@ -618,10 +632,14 @@ class Tetromino:
             self.playfield.DrawStack()
     
 
+
     #Checks if pos is colliding
     def __Colliding(self, posToCheck):
         return any(map(Tile.TileCollision, self.__tiles, posToCheck))
     
+
+
+
     def __IsStuck(self):
         leftCollide = []
         rightCollide = []

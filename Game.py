@@ -18,16 +18,13 @@ MENU_SCENE = Frame(DISPLAY, (DISPLAY_W, DISPLAY_H), color=(1, 1, 1), surfImage=m
 
 SCORE_MANAGER = Tetris.ScoreManager(MENU_SCENE)
 
-clock = pygame.time.Clock()
-speed = TIME_INTERVAL
-
 
 
 
 if __name__ == "__main__":
 
     while RUNNING:
-
+        print()
         if STATE == "Game":
             Game = Tetris.Game(GAME_SCENE, GAMEMODE, SCORE_MANAGER)
 

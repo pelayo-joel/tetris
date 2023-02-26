@@ -1,13 +1,13 @@
 {
     "test": {
         "Classic": {
-            "Score": 0,
-            "Time": 0,
-            "Lines Cleared": 0
+            "Score": 2900,
+            "Time": 123,
+            "Lines Cleared": 19
         },
         "Marathon": {
-            "Score": 400,
-            "Lines Cleared": 4
+            "Score": 1400,
+            "Lines Cleared": 12
         },
         "100-Lines Rush": {
             "Score": 6300,
@@ -15,9 +15,9 @@
             "Time": 245
         },
         "Survival": {
-            "Score": 0,
-            "Time": 0,
-            "Lines Cleared": 0
+            "Score": 4600,
+            "Time": 124,
+            "Lines Cleared": 24
         },
         "Password": "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"
     },

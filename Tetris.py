@@ -478,7 +478,6 @@ class Game:
             self.__InGameControls(event)
         
 
-        #print(self.playfield.addFlag)
         if self.__mode == "Survival" and self.playfield.addFlag:
             self.tetromino.TetrominoUp(self.playfield.GetAddedLines())
             self.playfield.addFlag = False
@@ -497,10 +496,13 @@ class Game:
             self.playfield.ClearingLines()
 
             if self.playfield.PlayfieldLvlUp():
+
                 if self.playfield.GetPlayfieldLvl() >= 25:
                     TIME_INTERVAL -= 50
+
                 elif self.playfield.GetPlayfieldLvl() >= 31:
                     TIME_INTERVAL -= 95
+
                 else:
                     TIME_INTERVAL -= 25
 
@@ -522,7 +524,7 @@ class Game:
             self.__NewTetromino()
 
         elif self.__mode == "Marathon" and self.playfield.sec == 61:
-            self.tetromino.TetroKill()
+            #self.tetromino.TetroKill()
             self.playfield.DrawStack()
             self.__GameOver()
 
