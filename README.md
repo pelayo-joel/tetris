@@ -89,7 +89,7 @@ Tetris 69 includes 4 differents modes being; Classic, Marathon, Rush and Surviva
 #### <p align="center">***Classic***</p>
 
 <p align="center"><img src="images-src/Tetris69-classic.gif" width="30%" height="20%"></p> 
-<p align="center">Classic has its name implies, is the a normal mode where you'll be ranked based on your score, aside from the Lvl and lock delay mechanic which are present in every mode, there is no particular feature in this one.</p>
+<p align="center">Classic as its name implies, is the normal mode where you'll be ranked based on your score, aside from the Lvl and lock delay mechanic which are present in every mode, there is no particular feature in this one.</p>
 <br></br>
 
 
@@ -103,22 +103,22 @@ Tetris 69 includes 4 differents modes being; Classic, Marathon, Rush and Surviva
 #### <p align="center">***100-Lines Rush***</p>
 
 <p align="center"><img src="images-src/Tetris69-rush.gif" width="30%" height="20%"></p> 
-<p align="center">Rush mode can be completed by clearing 100 lines, game starts at level 15 forcing you to reach level 31. This mode ranks players by lines cleared and time completion, score is not considered.</p>
+<p align="center">In Rush mode you have to clear 100 lines the fastest way possible, game starts at level 15 forcing you to reach level 31. This mode ranks players by lines cleared and time completion, score is not considered.</p>
 <br></br>
 
 
 #### <p align="center">***Survival***</p>
 
 <p align="center"><img src="images-src/Tetris69-survival.gif" width="30%" height="20%"></p> 
-<p align="center">This mode reminds you of Tetris 99, plays the same as Classic mode but periodically adds between 1 to 4 lines to the stack. Periods between additions of lines are shorten depending on your current level.</p>
+<p align="center">This mode reminds you of Tetris 99, plays the same as Classic mode but periodically adds between 1 to 4 lines to the stack. Periods between additions of lines are shortened depending on your current level.</p>
 <br></br>
 
 
 
 ### <p align="center">**Conclusion**</p>
 ---
-<p align="center">This was a very fun project to realize, wanting to be a game developer the realization of these types of projects definitely helps in understanding more about how games are working underneath the hood especially with a barebone game module being Pygame.</p>
-<p align="center">If you also want to be a game developer, i suggest that you realize a similar project to learn more about gamedev. Also, feel free to use this project however you like for your own projects.</p>
+<p align="center">This was a very fun project to realize, wanting to be a game developer the realization of these types of projects definitely helps in understanding more about how games are working underneath the hood especially with a barebone game module such as Pygame.</p>
+<p align="center">If you also want to be a game developer, I suggest that you realize a similar project to learn more about gamedev. Also, feel free to use this project however you like for your own projects.</p>
 <br></br>
 
 
