@@ -59,7 +59,7 @@ pip install pygame
 
 ## **The Game**
 ---
-Tetris 69 includes 4 differents modes being; Classic, Marathon, Rush and Survival. Scores are saved at the end of a game and ranks you in the score board if you're top 3.<br></br>
+Tetris 69 includes 4 different modes being; Classic, Marathon, Rush and Survival. Scores are saved at the end of a game and ranks you in the score board if you're top 3.<br></br>
  To get registered as a new player, simply type-in a username and a password, add yourself then play.\
  <br></br>
 
